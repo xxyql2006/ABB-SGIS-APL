@@ -20,11 +20,11 @@ import os
 # =================================================================
 os.chdir('../')
 cur_dir = os.getcwd()
-test_date = '20211101' # 试验日期
+test_date = '20211104' # 试验日期
 sample_time_list = [1]  # 降采样系数列表
 sample_str_list = ['10s']  # 采样时间列表
 sample_time_dict = dict(zip(sample_str_list, sample_time_list)) # 建立采样间隔与降采样比例的字典
-test_folder = test_date + '_DTR&TR_SR12kV 300A' # 试验文件夹
+test_folder = test_date + '_DTR&TR_3in1_SR12kV 300A' # 试验文件夹
 folder_data_raw = cur_dir + '\\' + test_folder + '\\' + '0_Data original' # 原始数据文件夹
 folder_data_clean = cur_dir + '\\' + test_folder + '\\' + '1_Data formatted' # 清理完数据文件夹
 file_name_sen = test_date[0:4] + '-' + test_date[4:6] + '-' + test_date[6:8] + '_TP.csv'  # 传感器数据文件名

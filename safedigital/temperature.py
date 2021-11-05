@@ -1,23 +1,11 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mar 5th 2021 
-Rev 1 finished on 25th 2021: updated temp balancing condition that highest temp point inside of gas tank < 1 within 1 hour
-Rev 2 updated figure annotation positions,added Coupler Raw Curves
-Rev 3 added the confirmed outcome figures for the report:Plot_All_Env,Plot_All_Env_Dif,Plot_All_Temp,Plot_All_TR
-Rev 4 plotting adapted to report curve types selected,re-write all methods for object-oriented purposes
-Rev 5 针对只有一组热电偶数据修改同步函数synch_data_group
+Created on 20211103
+Rev1 - Initial document
 
-@author: CNBOFAN1
+@author: Bob/Eric
 """
-
-"""
-Created on Mar 5th 2021
-Rev 0 Data cleansing was seperated from main programme
-
-@author: CNBOFAN1
-"""
-# %% load package
-
+# %% load packages
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -27,6 +15,7 @@ from datetime import timedelta
 from datetime import time
 import seaborn as sns
 import json
+import math
 
 
 # %%
@@ -47,100 +36,48 @@ class TempRiseExperiment(object):
         -------
             NA
         """
+        # load clean data and config file
         self.data = pd.read_csv(clean_data_file)
-        self.config = pd.read_csv(config_file)
+        with open(config_file, 'r') as f:
+            self.config = json.load(f)
 
-        self.t_balance = 0  # index test balanced for sensor
-        self.t_end = 0  # index test ended for sensor
-        self.view = pd.DataFrame()  # index test started for sensor
-        self.t2 = 0  # index test started for coupler
-        self.start_time = 0
-        self.raw_sen = pd.DataFrame()
-        self.raw_coup = pd.DataFrame()
-        self.raw_tank = pd.DataFrame()
-        self.bal_hr = 0
-        self.index_seq = []
-        self.str_seq = []
+        # rename the columns of data(DataFrame) by using config.json file
+        self.data = self.data.rename(columns=self.config)
 
-    def find_balance_index(self, data, bal_col_list):
-        """
-        find the temp balanced time determined by checking temp on columns(bal_col_list)
+        # initial parameters
+        self.bal_idx = 0
+        self.x_idx_list = []
+        self.x_str_list = []
+        self.t_oil = self.data.loc[:, 't_oil_bottle_1']
 
-        Arg:
-            data -
-            bal_col_list
-        Return:
+    def interp_data(self, col_name):
+        # find the index of zero points
+        zero_index = []
+        for i in range(len(self.data[col_name])):
+            if self.data.loc[i, col_name] == 0:
+                zero_index.append(i)
+        # print(zero_index)
 
-        """
-        data_sliced = data.iloc[:, bal_col_list]
-        data_sliced_dif = pd.DataFrame(index=range(10), columns=range(len(bal_col_list)))
-        # print('length of self.raw_tank',len(self.raw_tank))
-        for i in range(1440, len(data)):
-            # for j in range(10):
-            # data_sliced_dif.iloc[j,:] = abs(data_sliced.iloc[i+j,:] - data_sliced.iloc[i+j-360,:])
-            data_sliced_dif = (data_sliced.iloc[i, :] - data_sliced.iloc[i - 360, :]).abs()
+        # drop zero of original series
+        raw_drop = self.data[col_name].drop(zero_index)
 
-            # print('i =',i)
-            self.view = data_sliced_dif.iloc[:]
-            if (data_sliced_dif < 1.0).all(axis=None):
-                self.t0 = i
-                print('Temp balanced @ %s' % (str(data.iloc[i, 3])))
-                break
-            elif i == len(data) - 10:
-                print('Temp not balanced')
-                break
-        bal_hr = int(self.t0 / 360)
-        self.index_seq = [i * 360 for i in range(bal_hr)]
-        self.index_seq.append(self.t0)
-        self.str_seq = [(self.start_time + timedelta(hours=i)).strftime('%H:%M') for i in range(bal_hr)]
-        self.str_seq.append(data.iloc[self.t0, 3].strftime('%H:%M'))
-        print('t0 = ', self.t0)
+        # drop zero of time index
+        time_index_drop = self.data['snsr_timeindex'].drop(zero_index)
 
-    def data_interpol(self, data, ind_col, data_cols):
+        # do interpolation
+        f_raw = interpolate.interp1d(time_index_drop, raw_drop, kind='linear', fill_value='extrapolate')
+        for k in zero_index:
+            self.data.loc[k, col_name] = np.around(f_raw(k), 1)
 
-        time_index = data.iloc[:, ind_col]
-        time_index.index = range(len(time_index))
-        for i in data_cols:
 
-            zero_index = []
-            for j in range(len(data)):
-                if data.iloc[j, i] == 0:
-                    zero_index.append(j)
-            raw = data.iloc[:, i]
-            raw.index = range(len(raw))
-            raw_drop = raw.drop(zero_index)
-            time_index_drop = time_index.drop(zero_index)
-            f_raw = interpolate.interp1d(time_index_drop, raw_drop, kind='linear', fill_value='extrapolate')
-            for k in zero_index:
-                data.iloc[k, i] = np.around(f_raw(k), 1)
-        return data
-
-    def data_filter(self, raw, data_cols, low_lim_list, high_lim_list, lim_diff):
-        """
-        数据滤波器，包含硬边界滤波以及差分限幅滤波
-        """
-        for i, col in enumerate(data_cols):
-            diff_narr = np.diff(raw.iloc[:, col].values, prepend=raw.iloc[0, col])
-            for j in range(len(raw)):
-                if (raw.iloc[j, col] > high_lim_list[i]) or (raw.iloc[j, col] < low_lim_list[i]):
-                    raw.iloc[j, col] = 0
-                else:
-                    pass
-            for k in range(len(raw) - 1):
-                if ((diff_narr[k] > lim_diff[i]) or (diff_narr[k] < -lim_diff[i])) & (
-                        (diff_narr[k + 1] > lim_diff[i]) or (diff_narr[k + 1] < -lim_diff[i])):
-                    raw.iloc[k, col] = 0
-        return raw
-
-    def plot_temp(self, index, title, unit, fig_path, *data_tuple, **data_prop):
+    def t_plot(self, col_name_list, **kwargs):
         """General Plotting function of all temp curves
         Args:
         -------
-            index       - x-axis for each plot
-            title       - figure title
-            fig_path    - figure saving path
-            data_tuple  - numpy array type
-            bal         - 是否标记热平衡点
+            col_name_list   - list of column names to be plotted
+            title           - figure title
+            x_label         - x label
+            y_label         - y label
         Return:
         -------
             NA
@@ -148,47 +85,97 @@ class TempRiseExperiment(object):
         -------
             NA
         """
-        data_num = len(data_tuple)
-        time_now = datetime.now().strftime('%Y_%m_%d_%H_%M_%S')
+        # keywords arguments list
+        title = kwargs.get('title', 'Temperature Rise')
+        x_label = kwargs.get('x_label', 'Time (Hours:Minutes)')
+        y_label = kwargs.get('y_label', 'Temperature Rise(K)')
+
+        # figure
         plt.figure(dpi=500)
         sns.set(color_codes=True)
 
-        value_t0 = []
-        line_style = data_prop.get('line_style', ['-'] * data_num)
-        line_color = data_prop.get('line_color', ['b', 'g', 'r', 'c', 'm', 'y', 'k', 'w'])
-        legend_pos = data_prop.get('legend_pos', 'outside')
-        if data_prop['bal'] == True:
-            for i in range(len(data_tuple)):
-                data_array = data_tuple[i]
-                plt.plot(index,
-                         data_array,
-                         linewidth=1.5,
+        # default line color and styles
+        line_style = kwargs.get('line_style', ['-'] * len(col_name_list))
+        line_color = kwargs.get('line_color', ['b', 'g', 'r', 'c', 'm', 'y', 'k'] * len(col_name_list))
+
+        # plot curves as per "col_name_list"
+        try:
+            for i, name in enumerate(col_name_list):
+                self.interp_data(name)
+                plt.plot(self.data['snsr_timeindex'].values,
+                         self.data[name].values - self.data['t_oil_bottle_1'].values,
                          linestyle=line_style[i],
-                         color=line_color[i])
-                # plt.plot(index, data_array, linewidth=1.5, linestyle=line_style[i], color=line_color[i],
-                #          label=data_prop['label_list'][i] + ' balanced @ %4.1f %s' % (data_array[self.t0], unit))
+                         color=line_color[i],
+                         label=name + ' ({:.1f}K)'.format(self.data.loc[self.bal_idx, name] - self.t_oil[self.bal_idx]))
+        except Exception:
+            print("Plot {col_name} data error".format(col_name=name))
 
-                value_t0.append(data_array[self.t0])
-            plt.plot([self.t0, self.t0], [max(value_t0), 0], color='k', linewidth=0.5, linestyle="--")
-        else:
-            for i in range(len(data_tuple)):
-                data_array = data_tuple[i]
-                plt.plot(index, data_array, linewidth=1, label=data_prop['label_list'][i])
-        # plt.ylim(data_prop['ymin'],data_prop['ymax'])
-        # plt.xlim(data_prop['xmin'],data_prop['xmax'])
-        plt.xticks(self.index_seq, self.str_seq)
-        plt.xlabel('Time (Hours:Minitues)')
-        plt.ylabel('Temperature Rise %s' % unit)
+        # plot balance time marker
+        plt.plot([self.bal_idx, self.bal_idx],
+                 [self.data[col_name_list].max().max() - self.t_oil[self.bal_idx] + 1,
+                  self.data[col_name_list].max().min() - self.t_oil[self.bal_idx] - 1],
+                 color='k',
+                 linewidth=0.5,
+                 linestyle="--")
+
+        # specify figure properties
+        self.x_idx_list = [i * 360 for i in range(int(self.data.shape[0] / 360) + 1)]
+        self.x_str_list = [self.datetime_to_xtick(self.data.iloc[i, -2]) for i in self.x_idx_list]
+        plt.xticks(self.x_idx_list, self.x_str_list)
         plt.title(title)
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
+        plt.legend()
 
-        if data_prop['fig_save'] == True:
-            plt.savefig(fig_path + '\\' + title + ' saved on ' + time_now + '.png', dpi=200)
-        else:
-            pass
+        # save figure at 'fig_path'
+        if kwargs.get('fig_path'):
+            time_now = datetime.now().strftime('%Y%m%d%H%M%S')
+            plt.savefig(kwargs.get('fig_path') + '\\' + title + '_' + time_now + '.png', dpi=200)
+
+        # show
         plt.show()
 
 
-class DataClean:
+    def datetime_to_xtick(self, datetime_str):
+        datetime_dt = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
+        return datetime_dt.strftime('%H:%M')
+
+
+    def find_balance_index(self, col_num_list):
+        """method that find the temperature balancing point of channels assigned
+        Args:
+        -------
+            col_num_list   - list of column numbers to be checked
+
+        Return:
+        -------
+            NA
+        Notes:
+        -------
+            NA
+        """
+        # build sliced data of interest
+        data_sliced = self.data.iloc[:, col_num_list]
+
+        try:
+            for k in range(1440, len(data_sliced)):
+                data_sliced_diff = (data_sliced.iloc[k, :] - data_sliced.iloc[k - 360, :]).abs()
+
+                if (data_sliced_diff <= 1.0).all(axis=None):
+                    self.bal_idx = k
+                    print('Temperature balance time is {time}.'.format(time=self.data.iloc[k, -2]))
+                    break
+                elif k == len(data_sliced) - 1:
+                    self.bal_idx = k
+                    print('Temperature is not balanced.')
+                    break
+        except Exception:
+            print("Find balance point of {name} data error".format(name=col_num_list))
+
+
+
+
+class DataClean(object):
 
     def read_sensor_data(path):
         # 读取输入路径的传感器数据文件
@@ -197,12 +184,18 @@ class DataClean:
         raw_data['datetime'] = [datetime.strptime(raw_data.iloc[i, 0] + ':' + raw_data.iloc[i, 1],
                                                   '%m/%d/%Y:%I:%M:%S %p') for i in range(len(raw_data))]  # 粘合第0列和第1列行程datetime类型数据存入到新的一列
 
-        # 寻找试验开始时间，条件为智能传感器温度至少有一个值非0
+        # search test start index
         for i in range(len(raw_data)):
 
-            if (raw_data.iloc[i, 2] != 0 and raw_data.iloc[i, 3] != 0 and raw_data.iloc[i, 4]
-                    != 0 and raw_data.iloc[i, 5] != 0 and raw_data.iloc[i, 6] != 0 and raw_data.iloc[i, 7] != 0
-                    and raw_data.iloc[i, 8] != 0 and raw_data.iloc[i, 9] != 0 and raw_data.iloc[i, 10] != 0):
+            if (raw_data.iloc[i, 2] != 0 or
+                raw_data.iloc[i, 3] != 0 or 
+                raw_data.iloc[i, 4] != 0 or
+                raw_data.iloc[i, 5] != 0 or 
+                raw_data.iloc[i, 6] != 0 or 
+                raw_data.iloc[i, 7] != 0 or
+                raw_data.iloc[i, 8] != 0 or
+                raw_data.iloc[i, 9] != 0 or
+                raw_data.iloc[i, 10] != 0):
                 t0 = i
                 print('sensor data start from %s' % (raw_data.loc[i, 'datetime'].strftime("%H:%M:%S")))
                 break
@@ -264,13 +257,15 @@ class DataClean:
 
     def synch_data_group(*data):
 
-        start_time = max([data[i].iloc[0, -1] for i in range(len(data))])  # 找到所有组数据的共同开始时间
+        start_time = max([data[i].iloc[0, -1] for i in range(len(data))])  # 找到所有组数据重叠部分的共同开始时间
+        end_time = max([data[i].iloc[-1, -1] for i in range(len(data))])  # 找到所有组数据重叠部分的共同结束时间
         data_list = []
-        print('sensor & couplers common start time = ', start_time)
+        print('sensor & couplers common start time = ',start_time) # 打印所有数据重叠起始时间
+        print('sensor & couplers common end time =',end_time) # 打印所有数据重叠结束时间
         j = 0
         for element in data:
             j += 1
-            element['ind'] = [round((element.iloc[i, -1] - start_time).seconds / 10) for i in range(len(element))]
+            element['ind'] = [math.floor((element.iloc[i, -1] - start_time).seconds / 10) for i in range(len(element))]
             element = element.loc[(element['ind'] >= 0) & (element['ind'] <= 4320), :]
 
             # 解决由于round函数造成的出现重复索引的问题
@@ -303,85 +298,19 @@ class DataClean:
         # 重新
         # 找到三组数据重叠数据点的起止索引
         start_ind = max([i.iloc[0, -1] for i in data_list])
-
         end_ind = min([i.iloc[-1, -1] for i in data_list])
+        # print('sensor & couplers common end time = ', data_list[0].loc[data_list[0].loc,-2])
 
         # 用共同起止索引截取三组数据重叠的数据点
-        for j, ele in enumerate(data_list):
-            data_list[j] = ele.loc[ele.iloc[:, -1] <= end_ind, :]
+        for n, ele in enumerate(data_list):
+            data_list[n] = ele.loc[ele.iloc[:, -1] <= end_ind, :]
 
-            data_list[j] = data_list[j].loc[data_list[j].iloc[:, -1] >= start_ind, :]
+            data_list[n] = data_list[n].loc[data_list[n].iloc[:, -1] >= start_ind, :]
 
-            data_list[j].index = range(len(data_list[j]))
+            data_list[n].index = range(len(data_list[n]))
 
         return data_list
 
-    # 寻找热平衡点
-    def find_balance_index(data, bal_col_list):
-
-        data_sliced = data.iloc[:, bal_col_list]
-        data_sliced_dif = pd.DataFrame(index=range(10), columns=range(len(bal_col_list)))
-
-        for i in range(1440, len(data)):
-
-            data_sliced_dif = (data_sliced.iloc[i, :] - data_sliced.iloc[i - 360, :]).abs()
-
-            if (data_sliced_dif <= 1.0).all(axis=None):
-                t0 = i
-                # print('Temp balanced @ %s' %(str(data.iloc[i,3])))
-                break
-            elif i == len(data) - 1:
-                print('Temp not balanced')
-                break
-        # bal_hr =int(self.t0 / 360)
-        # self.index_seq = [i * 360 for i in range(bal_hr)]
-        # self.index_seq.append(self.t0)
-        # self.str_seq = [(self.start_time + timedelta(hours = i)).strftime('%H:%M') for i in range(bal_hr)]
-        # self.str_seq.append(data.iloc[self.t0,3].strftime('%H:%M'))
-        # print('t0 = ',self.t0)
-        return t0
-
-    # 对错误数据标记的“0”点进行插值，补全数据
-    def data_interpol(data, ind_col, data_cols):
-
-        time_index = data.iloc[:, ind_col]
-        time_index.index = range(len(time_index))
-        for i in data_cols:
-            print('column number', i)
-            zero_index = []
-            for j in range(len(data)):
-                if data.iloc[j, i] == 0:
-                    zero_index.append(j)
-            # print(zero_index)
-            raw = data.iloc[:, i]
-            raw.index = range(len(raw))
-            raw_drop = raw.drop(zero_index)
-            time_index_drop = time_index.drop(zero_index)
-            # f_raw = interpolate.interp1d(index_drop,raw_drop,kind='linear',fill_value='extrapolate')
-            f_raw = interpolate.interp1d(time_index_drop, raw_drop, kind='linear', fill_value='extrapolate')
-            for k in zero_index:
-                data.iloc[k, i] = np.around(f_raw(k), 1)
-        return data
-
-    # ====================================================================================
-    # 数据滤波器，包含硬边界滤波以及差分限幅滤波
-    # ====================================================================================
-    def data_filter(data, data_cols, low_lim_list, high_lim_list, lim_diff):
-
-        for i in range(len(data_cols)):
-            col = data_cols[i]
-            diff = np.diff(data.iloc[:, col].values, prepend=data.iloc[0, col])
-            for j in range(len(data)):
-                if (data.iloc[j, col] > high_lim_list[i]) or (data.iloc[j, col] < low_lim_list[i]):
-                    data.iloc[j, col] = 0
-
-                else:
-                    pass
-            for k in range(len(data) - 1):
-                if ((diff[k] > lim_diff[i]) or (diff[k] < -lim_diff[i])) & ((diff[k + 1] > lim_diff[i]) or (diff[k + 1] < -lim_diff[i])):
-                    data.iloc[k, col] = 0
-
-        return data
 
     @staticmethod
     def down_sample(data, ratio):
