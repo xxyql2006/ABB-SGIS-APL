@@ -2,6 +2,7 @@
 """
 Created on 20211103
 Rev1 - Initial document
+Rev2 - Add dynamic TR method
 
 @author: Bob/Eric
 """
@@ -16,7 +17,7 @@ from datetime import time
 import seaborn as sns
 import json
 import math
-
+from scipy import optimize
 
 # %%
 class TempRiseExperiment(object):
@@ -68,6 +69,10 @@ class TempRiseExperiment(object):
         f_raw = interpolate.interp1d(time_index_drop, raw_drop, kind='linear', fill_value='extrapolate')
         for k in zero_index:
             self.data.loc[k, col_name] = np.around(f_raw(k), 1)
+
+
+    def np_move_avg(self, a, n, mode="valid"):
+        return(np.convolve(a, np.ones((n,))/n, mode=mode))
 
 
     def t_plot(self, col_name_list, **kwargs):
@@ -172,7 +177,67 @@ class TempRiseExperiment(object):
         except Exception:
             print("Find balance point of {name} data error".format(name=col_num_list))
 
+    def cal_dynamic_time_const(self, col_name):
+        """method that calculate the DTR time constant of one data column of given name;
+           compare the fitted curve with scatter points
+        Args:
+        -------
+            col_name   - column name of data to be calculated 
 
+        Return:
+        -------
+            const     - time constant calculated   
+        Notes:
+        -------
+            NA,
+        """
+        ydata = self.data[col_name].copy().values
+        xdata = self.data['snsr_timeindex'].copy().values
+        tw = self.data.loc[self.bal_idx,col_name]
+        t0 = self.data.loc[0,col_name]
+        # create function to be fitted
+        def f_transient(x,T):
+            return tw * (1 - np.exp(-1 * x * 10 / T)) + t0 * np.exp(-1 * x * 10 / T)
+        const = optimize.curve_fit(f_transient,xdata,ydata)[0][0]
+        print('time constant T is',const)
+        plt.figure(dpi=500)
+        sns.set(color_codes=True)
+        plt.scatter(xdata,ydata,color='r')
+        plt.plot(xdata,f_transient(xdata,const),color='g')
+        plt.xlabel('sample point')
+        plt.ylabel('Temperature Rise (K)')
+        return const
+
+    def cal_dynamic_conver_const(self, *data):
+        """method that calculate the DTR conversion constant of one data set;
+           compare the fitted curve with scatter points
+        Args:
+        -------
+            *data   - data set to be fitted 
+
+        Return:
+        -------
+            const     - conversion constant calculated   
+        Notes:
+        -------
+            NA,
+        """
+        ydata = np.array(data)
+        xdata = self.data['snsr_timeindex'].copy().values
+        tw = self.data.loc[self.bal_idx,col_name]
+        t0 = self.data.loc[0,col_name]
+        # create function to be fitted
+        def f_transient(x,T):
+            return tw * (1 - np.exp(-1 * x * 10 / T)) + t0 * np.exp(-1 * x * 10 / T)
+        const = optimize.curve_fit(f_transient,xdata,ydata)[0][0]
+        print('time constant T is',const)
+        plt.figure(dpi=500)
+        sns.set(color_codes=True)
+        plt.scatter(xdata,ydata,color='r')
+        plt.plot(xdata,f_transient(xdata,const),color='g')
+        plt.xlabel('sample point')
+        plt.ylabel('Temperature Rise (K)')
+        return const
 
 
 class DataClean(object):
@@ -248,7 +313,7 @@ class DataClean(object):
             raw_data = raw_data[raw_data.index % multiple == 0]
         else:
             pass
-
+            
         return raw_data
 
     # ====================================================================================
@@ -258,7 +323,7 @@ class DataClean(object):
     def synch_data_group(*data):
 
         start_time = max([data[i].iloc[0, -1] for i in range(len(data))])  # 找到所有组数据重叠部分的共同开始时间
-        end_time = max([data[i].iloc[-1, -1] for i in range(len(data))])  # 找到所有组数据重叠部分的共同结束时间
+        end_time = min([data[i].iloc[-1, -1] for i in range(len(data))])  # 找到所有组数据重叠部分的共同结束时间
         data_list = []
         print('sensor & couplers common start time = ',start_time) # 打印所有数据重叠起始时间
         print('sensor & couplers common end time =',end_time) # 打印所有数据重叠结束时间
