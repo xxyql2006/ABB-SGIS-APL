@@ -191,10 +191,10 @@ class TempRiseExperiment(object):
         -------
             NA,
         """
-        ydata = self.data[col_name].copy().values
+        ydata = (self.data[col_name] - self.t_oil).copy().values
         xdata = self.data['snsr_timeindex'].copy().values
-        tw = self.data.loc[self.bal_idx,col_name]
-        t0 = self.data.loc[0,col_name]
+        tw = self.data.loc[self.bal_idx,col_name] - self.t_oil.loc[self.bal_idx]
+        t0 = self.data.loc[0,col_name] - self.t_oil[0]
         # create function to be fitted
         def f_transient(x,T):
             return tw * (1 - np.exp(-1 * x * 10 / T)) + t0 * np.exp(-1 * x * 10 / T)
