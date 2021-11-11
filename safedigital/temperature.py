@@ -96,7 +96,7 @@ class TempRiseExperiment(object):
         y_label = kwargs.get('y_label', 'Temperature Rise(K)')
 
         # figure
-        plt.figure(dpi=500)
+        plt.figure(dpi=100, figsize=(3,2))
         sns.set(color_codes=True)
 
         # default line color and styles
@@ -140,6 +140,77 @@ class TempRiseExperiment(object):
         # show
         plt.show()
 
+    def dynamic_tr_plot(self, col_name, cur_var_list, time_const, conver_const,tr_rated, const, **kwargs):
+        """Plotting dynamic temperature rise algorithm
+        Args:
+        -------
+            col_name        - column name to be plotted
+            cur_var_list    - list of current time-variant data points
+            time_const      - time constant
+            conver_const    - conversion constant
+            title           - figure title
+            x_label         - x label
+            y_label         - y label
+        Return:
+        -------
+            NA
+        Notes:
+        -------
+            NA
+        """
+        # keywords arguments list
+        title = kwargs.get('title', 'Temperature Rise')
+        x_label = kwargs.get('x_label', 'Time (Hours:Minutes)')
+        y_label = kwargs.get('y_label', 'Temperature Rise(K)')
+
+        # figure
+        plt.figure(dpi=300)
+        sns.set(color_codes=True)
+
+        # # default line color and styles
+        # line_style = kwargs.get('line_style', ['-'] * len(col_name_list))
+        # line_color = kwargs.get('line_color', ['b', 'g', 'r', 'c', 'm', 'y', 'k'] * len(col_name_list))
+        
+        # cut data as long as current data point list
+        self.interp_data(col_name) 
+        data_cut = self.data.loc[:len(cur_var_list)-1,[col_name,'t_oil_bottle_1']].copy()
+        data_cut[col_name] = data_cut[col_name] - data_cut['t_oil_bottle_1']
+        
+        # build current time-variant data column
+        data_cut['cur_var'] = cur_var_list
+        # build steady-state temperature rise column
+        data_cut['tao_w'] = [(i / 630) ** conver_const * tr_rated for i in cur_var_list]
+        # build fitted temperature rise data column
+        print(data_cut)
+        tr_fit_list = [data_cut.loc[0,col_name]] + [0] * (len(cur_var_list) - 1)
+        for k in range(1,len(cur_var_list)):
+            tr_fit_list[k] = tr_fit_list[k - 1] + (data_cut.loc[k,'tao_w'] - tr_fit_list[k - 1]) * (1 - np.exp(-10 / time_const))
+
+        data_cut['tr_fit'] = tr_fit_list
+        data_cut['tr_fit'] += const
+        # plot curves of "col_name"
+        plt.plot(data_cut.index,data_cut[col_name],label = col_name)
+        plt.plot(data_cut.index,data_cut['tao_w'],label = 'tao_w')
+        plt.plot(data_cut.index,data_cut['tr_fit'],label = 'tr_fit')
+
+
+
+        # specify figure properties
+        # self.x_idx_list = [i * 360 for i in range(int(self.data.shape[0] / 360) + 1)]
+        # self.x_str_list = [self.datetime_to_xtick(self.data.iloc[i, -2]) for i in self.x_idx_list]
+        # plt.xticks(self.x_idx_list, self.x_str_list)
+        plt.title(title)
+        plt.xlabel(x_label)
+        plt.ylabel(y_label)
+        plt.legend()
+
+        # save figure at 'fig_path'
+        if kwargs.get('fig_path'):
+            time_now = datetime.now().strftime('%Y%m%d%H%M%S')
+            plt.savefig(kwargs.get('fig_path') + '\\' + title + '_' + time_now + '.png', dpi=200)
+
+        # show
+        plt.show()
 
     def datetime_to_xtick(self, datetime_str):
         datetime_dt = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
@@ -196,45 +267,46 @@ class TempRiseExperiment(object):
         tw = self.data.loc[self.bal_idx,col_name] - self.t_oil.loc[self.bal_idx]
         t0 = self.data.loc[0,col_name] - self.t_oil[0]
         # create function to be fitted
-        def f_transient(x,T):
+        def f_transient_tr(x,T):
             return tw * (1 - np.exp(-1 * x * 10 / T)) + t0 * np.exp(-1 * x * 10 / T)
-        const = optimize.curve_fit(f_transient,xdata,ydata)[0][0]
+        const = optimize.curve_fit(f_transient_tr,xdata,ydata)[0][0]
         print('time constant T is',const)
-        plt.figure(dpi=500)
+        plt.figure(dpi=500, figsize=(10,6))
         sns.set(color_codes=True)
         plt.scatter(xdata,ydata,color='r')
-        plt.plot(xdata,f_transient(xdata,const),color='g')
+        plt.plot(xdata,f_transient_tr(xdata,const),color='g')
         plt.xlabel('sample point')
         plt.ylabel('Temperature Rise (K)')
         return const
 
-    def cal_dynamic_conver_const(self, *data):
+    @ staticmethod
+    def cal_dynamic_conver_const(xdata,ydata):
         """method that calculate the DTR conversion constant of one data set;
            compare the fitted curve with scatter points
         Args:
         -------
-            *data   - data set to be fitted 
+            *data   - data set to be fitted
 
         Return:
         -------
-            const     - conversion constant calculated   
+            const   - conversion constant calculated   
         Notes:
         -------
-            NA,
+            the last data point must be the TR rated (630A)
         """
-        ydata = np.array(data)
-        xdata = self.data['snsr_timeindex'].copy().values
-        tw = self.data.loc[self.bal_idx,col_name]
-        t0 = self.data.loc[0,col_name]
+        xdata = np.array(xdata)
+        ydata = np.array(ydata)
+        tr_rated = ydata[-1]
         # create function to be fitted
-        def f_transient(x,T):
-            return tw * (1 - np.exp(-1 * x * 10 / T)) + t0 * np.exp(-1 * x * 10 / T)
-        const = optimize.curve_fit(f_transient,xdata,ydata)[0][0]
-        print('time constant T is',const)
+        def f_steady_state_tr(x,a):
+            return (x / 630) ** a * tr_rated
+        const = optimize.curve_fit(f_steady_state_tr,xdata,ydata)[0][0]
+        print('conversion constant a is',const)
         plt.figure(dpi=500)
         sns.set(color_codes=True)
         plt.scatter(xdata,ydata,color='r')
-        plt.plot(xdata,f_transient(xdata,const),color='g')
+        x_span = np.array(range(min(xdata),max(xdata)+1,10))
+        plt.plot(x_span,f_steady_state_tr(x_span,const),color='g')
         plt.xlabel('sample point')
         plt.ylabel('Temperature Rise (K)')
         return const
@@ -243,8 +315,8 @@ class TempRiseExperiment(object):
 class DataClean(object):
 
     def read_sensor_data(path):
-        # 读取输入路径的传感器数据文件
-        raw_data = pd.read_csv(path, header=None)  # 将读取文件传入数据帧
+        # read data 
+        raw_data = pd.read_csv(path, header=None) 
         raw_data.iloc[:, 2:].astype(float)  # 第2列以后全部强制转换为浮点数
         raw_data['datetime'] = [datetime.strptime(raw_data.iloc[i, 0] + ':' + raw_data.iloc[i, 1],
                                                   '%m/%d/%Y:%I:%M:%S %p') for i in range(len(raw_data))]  # 粘合第0列和第1列行程datetime类型数据存入到新的一列
@@ -269,7 +341,7 @@ class DataClean(object):
             else:
                 continue
 
-        # 寻找试验结束时间，条件为智能传感器温度全为0
+        # search test end index
         for i in range(t0, len(raw_data)):
             if (raw_data.iloc[i, 2] == 0 and raw_data.iloc[i, 3] == 0 and raw_data.iloc[i, 4]
                     == 0 and raw_data.iloc[i, 5] == 0 and raw_data.iloc[i, 6] == 0 and raw_data.iloc[i, 7] == 0
@@ -283,7 +355,7 @@ class DataClean(object):
             else:
                 continue
 
-            # 检查采样间隔是否为10秒，不是的话降采样到10秒
+            # check if the sample time is 10s, if not down-sample to 10s 
         time_interval = (raw_data.iloc[1, -1] - raw_data.iloc[0, -1]).seconds
         if time_interval != 10:
             multiple = 10 / time_interval
@@ -291,7 +363,7 @@ class DataClean(object):
         else:
             pass
 
-        # 截取试验开始到结束的有效数据
+        # slice data from start index to end index
         return raw_data.iloc[t0:tn, :]
 
     # ====================================================================================
@@ -330,14 +402,13 @@ class DataClean(object):
         j = 0
         for element in data:
             j += 1
-            element['ind'] = [math.floor((element.iloc[i, -1] - start_time).seconds / 10) for i in range(len(element))]
+            element['ind'] = [math.ceil((element.iloc[i, -1] - start_time).seconds / 10) for i in range(len(element))]
             element = element.loc[(element['ind'] >= 0) & (element['ind'] <= 4320), :]
 
-            # 解决由于round函数造成的出现重复索引的问题
+            # check and fix that if there are any duplicated index
             for k in range(len(element) - 1):
                 if element.iloc[k, -1] == element.iloc[k + 1, -1]:
-                    element.iloc[k + 1, -1] = element.iloc[k, 9] + 1
-                    k = k + 1
+                    element.iloc[k + 1, -1] += 1
                 else:
                     pass
             # 检查数据是否存在间断索引
@@ -382,3 +453,5 @@ class DataClean(object):
         index = np.arange(len(data))
         data_out = data[index % ratio == 0]
         return data_out
+
+# %%
