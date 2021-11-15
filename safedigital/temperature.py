@@ -187,11 +187,12 @@ class TempRiseExperiment(object):
             tr_fit_list[k] = tr_fit_list[k - 1] + (data_cut.loc[k,'tao_w'] - tr_fit_list[k - 1]) * (1 - np.exp(-10 / time_const))
 
         data_cut['tr_fit'] = tr_fit_list
-        data_cut['tr_fit'] += const
+        # data_cut['tr_fit'] += const
         # plot curves of "col_name"
+        idx_delay = np.array(data_cut.index) + const
         plt.plot(data_cut.index,data_cut[col_name],label = col_name)
         plt.plot(data_cut.index,data_cut['tao_w'],label = 'tao_w')
-        plt.plot(data_cut.index,data_cut['tr_fit'],label = 'tr_fit')
+        plt.plot(idx_delay,data_cut['tr_fit'],label = 'tr_fit')
 
 
 
