@@ -98,7 +98,7 @@ class TempRiseExperiment(object):
         y_label = kwargs.get('y_label', 'Temperature Rise(K)')
 
         # figure
-        plt.figure(dpi=100, figsize=(3, 2))
+        plt.figure(dpi=300)
         sns.set(color_codes=True)
 
         # default line color and styles
@@ -146,8 +146,8 @@ class TempRiseExperiment(object):
                         title + '_' + time_now + '.png', dpi=200)
 
         # show
-        # plt.show()
-        plt.close()
+        plt.show()
+        # plt.close()
 
     def t_dtr_plot(self, col_name, cur_var_list, time_const, conver_const, tr_rated, const, **kwargs):
         """Plotting dynamic temperature rise algorithm
@@ -394,15 +394,30 @@ class TempRiseExperiment(object):
 class DataClean(object):
 
     def read_sensor_data(path):
-        # read data
+        """method that read the data from intelligent temperature sensor,
+           intelligent gas pressure sensor and intelligent temperature 
+           and humidity sensor;
+
+        Args:
+        -------
+            path                - full path of the data file
+
+        Return:
+        -------
+            raw_data_sliced     - raw data cutted from starting index to ending index
+        Notes:
+        -------
+
+        """
         raw_data = pd.read_csv(path, header=None)
-        raw_data.iloc[:, 2:].astype(float)  # 第2列以后全部强制转换为浮点数
+        # convert string data to float
+        raw_data.iloc[:, 2:].astype(float)
+        # add new column of datetime
         raw_data['datetime'] = [datetime.strptime(raw_data.iloc[i, 0] + ':' + raw_data.iloc[i, 1],
-                                                  '%m/%d/%Y:%I:%M:%S %p') for i in range(len(raw_data))]  # 粘合第0列和第1列行程datetime类型数据存入到新的一列
+                                                  '%m/%d/%Y:%I:%M:%S %p') for i in range(len(raw_data))]
 
         # search test start index
         for i in range(len(raw_data)):
-
             if (raw_data.iloc[i, 2] != 0 or
                 raw_data.iloc[i, 3] != 0 or
                 raw_data.iloc[i, 4] != 0 or
@@ -411,33 +426,32 @@ class DataClean(object):
                 raw_data.iloc[i, 7] != 0 or
                 raw_data.iloc[i, 8] != 0 or
                 raw_data.iloc[i, 9] != 0 or
-                raw_data.iloc[i, 10] != 0):
+                    raw_data.iloc[i, 10] != 0):
                 t0 = i
-                print('sensor data start from %s' %
+                print('test started from %s' %
                       (raw_data.loc[i, 'datetime'].strftime("%H:%M:%S")))
                 break
             elif i == (len(raw_data) - 1):
-                print('sensor data was all "0"')
+                print('test data was all "0"')
             else:
                 continue
 
-        # search test end index
-        for i in range(t0, len(raw_data)):
+        # search test end index from 1 hour after test started
+        for i in range(t0 + 360, len(raw_data)):
             if (raw_data.iloc[i, 2] == 0 and raw_data.iloc[i, 3] == 0 and raw_data.iloc[i, 4]
                     == 0 and raw_data.iloc[i, 5] == 0 and raw_data.iloc[i, 6] == 0 and raw_data.iloc[i, 7] == 0
                     and raw_data.iloc[i, 8] == 0 and raw_data.iloc[i, 9] == 0 and raw_data.iloc[i, 10] == 0):
                 tn = i
-                print('sensor data ended at %s' %
+                print('test ended at %s' %
                       (raw_data.loc[i, 'datetime'].strftime("%H:%M:%S")))
                 break
             elif i == (len(raw_data) - 1):
                 tn = i + 1
-                print('sensor data ended at %s' %
-                      (raw_data.loc[i, 'datetime'].strftime("%H:%M:%S")))
+                print('test data are not fully recorded')
             else:
                 continue
 
-            # check if the sample time is 10s, if not down-sample to 10s
+        # check if the sample time is 10s, if not down-sample to 10s
         time_interval = (raw_data.iloc[1, -1] - raw_data.iloc[0, -1]).seconds
         if time_interval != 10:
             multiple = 10 / time_interval
@@ -446,22 +460,38 @@ class DataClean(object):
             pass
 
         # slice data from start index to end index
-        return raw_data.iloc[t0:tn, :]
+        raw_data_sliced = raw_data.iloc[t0:tn, :]
+        raw_data_sliced.index = range(len(raw_data_sliced))
+        return raw_data_sliced
 
     # ====================================================================================
     # 读取热电偶数据
     # ====================================================================================
 
     def read_coupler_data(path):
+        """method that read the data from thermalcouples;
 
-        raw_data = pd.read_csv(path, header=25, na_values=[
-                               '          ', '     -OVER'])
+        Args:
+        -------
+            path        - full path of the data file
+
+        Return:
+        -------
+            raw_data    - raw data read
+        Notes:
+        -------
+
+        """
+        raw_data = pd.read_csv(path,
+                               header=25,
+                               na_values=['          ', '     -OVER'])
+
         raw_data.iloc[:, 4:].astype(float)
         raw_data = raw_data.fillna(0)
         raw_data['datetime'] = [datetime.strptime(raw_data.iloc[i, 1] + ':' + raw_data.iloc[i, 2],
                                                   '%Y/%m/%d:%H:%M:%S') for i in range(len(raw_data.iloc[:, 2]))]
 
-        # 检查采样间隔，不是十秒的话降采样至10秒
+        # check if the sample time is 10s, if not down-sample to 10s
         time_interval = (raw_data.iloc[1, -1] - raw_data.iloc[0, -1]).seconds
         if time_interval != 10:
             multiple = 10 / time_interval
@@ -471,23 +501,36 @@ class DataClean(object):
 
         return raw_data
 
-    # ====================================================================================
-    # 找到三组数据重叠的起止时间，并且同步三组数据的时间轴
-    # ====================================================================================
-
     def synch_data_group(*data):
+        """method that synchronize groups of data;
 
+        Args:
+        -------
+            data        - groups of data to be synchronized
+
+        Return:
+        -------
+            data_list   - synchronized list of data groups 
+        Notes:
+        -------
+
+        """
+        # search the common starting time
         start_time = max([data[i].iloc[0, -1]
-                         for i in range(len(data))])  # 找到所有组数据重叠部分的共同开始时间
+                         for i in range(len(data))])
+        # search the common ending time
         end_time = min([data[i].iloc[-1, -1]
-                       for i in range(len(data))])  # 找到所有组数据重叠部分的共同结束时间
+                       for i in range(len(data))])
         data_list = []
         print('sensor & couplers common start time = ',
-              start_time)  # 打印所有数据重叠起始时间
-        print('sensor & couplers common end time =', end_time)  # 打印所有数据重叠结束时间
+              start_time)
+        print('sensor & couplers common end time =',
+              end_time)
         j = 0
+        # perform on each group of data
         for element in data:
             j += 1
+            # add one column of index relative to the common starting time
             element['ind'] = [math.ceil(
                 (element.iloc[i, -1] - start_time).seconds / 10) for i in range(len(element))]
             element = element.loc[(element['ind'] >= 0)
@@ -496,27 +539,31 @@ class DataClean(object):
             # check and fix that if there are any duplicated index
             for k in range(len(element) - 1):
                 if element.iloc[k, -1] == element.iloc[k + 1, -1]:
-                    element.iloc[k + 1, -1] += 1
+                    element = element.drop(k + 1)
                 else:
                     pass
-            # 检查数据是否存在间断索引
+            # check and fix that if there are any discontinued index
             if (element.iloc[-1, -1] - element.iloc[0, -1]) != (len(element) - 1):
                 print('%dth group of data has discontinued points' % j)
                 print('head,tail and length are ',
-                      element.iloc[0, -1], element.iloc[-1, -1], len(element))
+                      element.loc[0, 'ind'],
+                      element.loc[-1, 'ind'],
+                      len(element))
+                # build the full length index 
                 full_index = pd.Series(
                     range(element.iloc[0, -1], element.iloc[-1, -1] + 1))
+                # find the discontinued index    
                 miss_index = full_index.loc[~full_index.isin(
                     list(element['ind']))]
                 element_full = pd.DataFrame(data=0, columns=range(
                     element.shape[1]), index=range(len(full_index)))
 
-                # 填入旧数据
+                # fill in data 
                 for i in range(len(element)):
                     element_full.iloc[element.iloc[i, -1] -
                                       element.iloc[0, -1], :] = element.iloc[i, :]
 
-                # 填入缺失索引
+                # fill in with missed index
                 for i in list(miss_index):
                     element_full.iloc[i - element.iloc[0, -1], -1] = i
                 data_list.append(element_full)
