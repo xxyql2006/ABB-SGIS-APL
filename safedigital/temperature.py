@@ -53,8 +53,21 @@ class TempRiseExperiment(object):
         self.x_idx_list = []
         self.x_str_list = []
         self.t_oil = self.data.loc[:, 't_oil_bottle_1']
+        self.t_env = self.data.loc[:, 't_env']
 
-    def interp_data(self, col_name):
+    def interp_data_zero(self, col_name):
+        """interpolate the "0" in data column.
+
+        Args:
+        -------
+            col_name - column name to be interpolated.
+        Return:
+        -------
+            NA
+        Notes:
+        -------
+            NA
+        """
         # find the index of zero points
         zero_index = []
         for i in range(len(self.data[col_name])):
@@ -66,12 +79,34 @@ class TempRiseExperiment(object):
         raw_drop = self.data[col_name].drop(zero_index)
 
         # drop zero of time index
-        time_index_drop = self.data['snsr_timeindex'].drop(zero_index)
+        time_index_drop = self.data['snsr_time_index'].drop(zero_index)
 
         # do interpolation
         f_raw = interpolate.interp1d(
             time_index_drop, raw_drop, kind='linear', fill_value='extrapolate')
         for k in zero_index:
+            self.data.loc[k, col_name] = np.around(f_raw(k), 1)
+    
+    def interp_data_nan(self, col_name):
+        # find the index of zero points
+        nan_index = []
+        for i in range(len(self.data[col_name])):
+            if np.isnan(self.data.loc[i, col_name]):
+                nan_index.append(i)
+        # print(nan_index)
+
+        # drop nan of original series
+        raw_drop = self.data[col_name].drop(nan_index)
+
+        # drop zero of time index
+        time_index_drop = self.data['snsr_time_index'].drop(nan_index)
+
+        # do interpolation
+        f_raw = interpolate.interp1d(time_index_drop, 
+                                    raw_drop, 
+                                    kind='linear', 
+                                    fill_value='extrapolate')
+        for k in nan_index:
             self.data.loc[k, col_name] = np.around(f_raw(k), 1)
 
     def np_move_avg(self, a, n, mode="valid"):
@@ -98,8 +133,8 @@ class TempRiseExperiment(object):
         y_label = kwargs.get('y_label', 'Temperature Rise(K)')
 
         # figure
-        plt.figure(dpi=300)
-        sns.set(color_codes=True)
+        plt.figure(dpi=200)
+        # sns.set(color_codes=True)
 
         # default line color and styles
         line_style = kwargs.get('line_style',
@@ -110,20 +145,20 @@ class TempRiseExperiment(object):
         # plot curves as per "col_name_list"
         try:
             for i, name in enumerate(col_name_list):
-                self.interp_data(name)
-                plt.plot(self.data['snsr_timeindex'].values,
+                # self.interp_data_zero(name)
+                plt.plot(self.data['snsr_time_index'].values,
                          self.data[name].values -
                          self.data['t_oil_bottle_1'].values,
                          linestyle=line_style[i],
                          color=line_color[i],
-                         label=name + ' ({:.1f}K)'.format(self.data.loc[self.bal_idx, name] - self.t_oil[self.bal_idx]))
+                         label=name + ' ({:.1f}K)'.format(self.data.loc[self.bal_idx, name] - self.t_env[self.bal_idx]))
         except Exception:
             print("Plot {col_name} data error".format(col_name=name))
 
         # plot balance time marker
         plt.plot([self.bal_idx, self.bal_idx],
-                 [self.data[col_name_list].max().max() - self.t_oil[self.bal_idx] + 1,
-                  self.data[col_name_list].max().min() - self.t_oil[self.bal_idx] - 1],
+                 [self.data[col_name_list].max().max() - self.t_env[self.bal_idx] + 1,
+                  self.data[col_name_list].max().min() - self.t_env[self.bal_idx] - 1],
                  color='k',
                  linewidth=0.5,
                  linestyle="--")
@@ -134,6 +169,7 @@ class TempRiseExperiment(object):
         self.x_str_list = [self.datetime_to_xtick(
             self.data.iloc[i, -2]) for i in self.x_idx_list]
         plt.xticks(self.x_idx_list, self.x_str_list)
+        
         plt.title(title)
         plt.xlabel(x_label)
         plt.ylabel(y_label)
@@ -149,7 +185,7 @@ class TempRiseExperiment(object):
         plt.show()
         # plt.close()
 
-    def t_dtr_plot(self, col_name, cur_var_list, time_const, conver_const, tr_rated, const, **kwargs):
+    def t_dtr_plot(self, col_name, cur_list, time_const, conver_const, tr_rated, delay_const, **kwargs):
         """Plotting dynamic temperature rise algorithm
         Args:
         -------
@@ -157,6 +193,7 @@ class TempRiseExperiment(object):
             cur_var_list    - list of current time-variant data points
             time_const      - time constant
             conver_const    - conversion constant
+            delay_const     - delay constant
             title           - figure title
             x_label         - x label
             y_label         - y label
@@ -169,67 +206,78 @@ class TempRiseExperiment(object):
         """
         # keywords arguments list
         title = kwargs.get('title',
-                           'Dynamic Temperature Rise Performance of {}'.format(col_name))
+                           'DTR Performance of {}'.format(col_name))
         x_label = kwargs.get('x_label',
                              'Sample Point')
         y_label = kwargs.get('y_label',
                              'Temperature Rise(K)')
 
         # figure
-        fig, ax1 = plt.subplots(1, 1, dpi=300)
-        sns.set(color_codes=True)
+        fig, ax1 = plt.subplots(1, 1, dpi=200)
+        # sns.set(color_codes=True)
 
         # cut data as long as current data point list
-        self.interp_data(col_name)
-        data_cut = self.data.loc[:len(
-            cur_var_list)-1, [col_name, 't_oil_bottle_1']].copy()
+        # when 'loc' command is used [a:b] include b 
+        data_cut = self.data.loc[:len(cur_list) - 1 ,[col_name, 't_oil_bottle_1','snsr_datetime']].copy() 
         data_cut[col_name] = data_cut[col_name] - data_cut['t_oil_bottle_1']
 
         # build current time-variant data column
-        data_cut['cur_var'] = cur_var_list
+        data_cut['current'] = cur_list
+
         # build steady-state temperature rise column
         data_cut['tao_w'] = [(i / 630) ** conver_const *
-                             tr_rated for i in cur_var_list]
+                             tr_rated for i in cur_list]
+        # print(data_cut['tao_w'])
+       
         # build fitted temperature rise data column
         tr_fit_list = ([data_cut.loc[0, col_name]] +
-                       [0] * (len(cur_var_list) - 1))
-        for k in range(1, len(cur_var_list)):
-            tr_fit_list[k] = tr_fit_list[k - 1] + (
-                data_cut.loc[k, 'tao_w'] - tr_fit_list[k - 1]) * (1 - np.exp(-10 / time_const))
-        # prepend list with "const" number of data points
-        tr_fit_list = [tr_fit_list[0]] * const + tr_fit_list
-        # cut list the last "const" number of element from its tail
-        del tr_fit_list[-1 * const:]
+                       [0] * (len(cur_list) - 1))
+        for k in range(1, len(cur_list)):
+
+            tr_fit_list[k] = tr_fit_list[k - 1] + (data_cut.loc[k, 'tao_w'] - 
+            tr_fit_list[k - 1]) * (1 - np.exp(-10 / time_const))
+        # print('tr_fit_list',tr_fit_list)
+        if delay_const != 0:
+            # prepend list with "delay_const" number of data points
+            tr_fit_list = [tr_fit_list[0]] * delay_const + tr_fit_list
+        
+            # cut list the last "const" number of element from its tail
+            del tr_fit_list[-1 * delay_const:]
         data_cut['tr_fit'] = tr_fit_list
-        # idx_delay = np.array(data_cut.index) + const
+        # idx_delay = np.array(data_cut.index) + delay_const
+        
+        
         plt.plot(data_cut.index,
                  data_cut[col_name],
-                 color='k',
+                 color='g',
                  label=col_name)
         plt.plot(data_cut.index,
                  data_cut['tr_fit'],
-                 color='g',
+                 color='c',
                  label='tr_fit')
         plt.plot(data_cut.index,
-                 1.1 * data_cut['tr_fit'],
+                 10 + data_cut['tr_fit'],
                  color='y',
                  label='tr_warning')
         plt.plot(data_cut.index,
-                 1.2 * data_cut['tr_fit'],
+                 18 + data_cut['tr_fit'],
                  color='r',
                  label='tr_alarm')
         ax2 = ax1.twinx()
         ax2.plot(data_cut.index,
-                 data_cut['cur_var'],
-                 label='cur_var',
-                 linestyle='--',
-                 color='lightblue')
+                 data_cut['current'],
+                 label='current',
+                 linestyle=':',
+                 color='k')
+        xdata = [datetime.strftime(datetime.strptime(i, '%Y-%m-%d %H:%M:%S'),'%H:%M') for i in data_cut['snsr_datetime']]
+        plt.xticks(data_cut.index[::360],xdata[::360])        
         plt.title(title)
         plt.xlabel(x_label)
         ax1.set_ylabel(y_label)
         ax2.set_ylabel('Time Variant Current (A)')
         ax1.legend(fontsize=7)
         ax2.legend(fontsize=7)
+        
 
         # save figure at 'fig_path'
         if kwargs.get('fig_path'):
@@ -258,14 +306,19 @@ class TempRiseExperiment(object):
             NA
         """
         # build sliced data of interest
-        data_sliced = self.data.iloc[:, col_num_list]
-
+         
+        data_sliced = self.data.iloc[:, col_num_list].copy()
+        # mask = [self.data.columns[i] for i in col_num_list]
+        # print(mask)
+        for i in range(len(col_num_list)):
+            # print('i=',i,'type of i',type(i))
+            data_sliced.iloc[:,i] = data_sliced.iloc[:,i] - self.t_oil
         try:
             for k in range(1440, len(data_sliced)):
                 data_sliced_diff = (
                     data_sliced.iloc[k, :] - data_sliced.iloc[k - 360, :]).abs()
 
-                if (data_sliced_diff <= 1.0).all(axis=None):
+                if (data_sliced_diff < 1.0).all(axis=None):
                     self.bal_idx = k
                     print('Temperature balance time is {time}.'.format(
                         time=self.data.iloc[k, -2]))
@@ -278,12 +331,12 @@ class TempRiseExperiment(object):
             print("Find balance point of {name} data error".format(
                 name=col_num_list))
 
-    def cal_dynamic_time_const(self, col_name):
+    def cal_dynamic_time_const(self, col_name, **kwargs):
         """method that calculate the DTR time constant of one data column of given name;
            compare the fitted curve with scatter points
         Args:
         -------
-            col_name   - column name of data to be calculated 
+            t_amb      - ambient temperature(t_env/t_oil) 
 
         Return:
         -------
@@ -292,46 +345,71 @@ class TempRiseExperiment(object):
         -------
             NA,
         """
-        # load x,y data
-        ydata = (self.data[col_name] - self.t_oil).copy().values
-        xdata = self.data['snsr_timeindex'].copy().values
-        # calculate steady-state temperature rise
-        tw = (self.data.loc[self.bal_idx, col_name] -
-              self.t_oil.loc[self.bal_idx])
-        # calculate initial temperature rise
-        t0 = self.data.loc[0, col_name] - self.t_oil[0]
-        # create function to be fitted
+        # load steady-state rated temperature rise t0
+        t_amb = kwargs.get('t_amb','t_env')
+        if t_amb == 't_oil':
 
+            tw = kwargs.get('tw', 
+                            self.data.loc[self.bal_idx, col_name] - 
+                            self.t_oil.loc[self.bal_idx])
+            ydata = (self.data[col_name] - self.t_oil).copy().values
+        else:
+            tw = kwargs.get('tw', 
+                            self.data.loc[self.bal_idx, col_name] - 
+                            self.t_env.loc[self.bal_idx])
+            ydata = (self.data[col_name] - self.t_env).copy().values            
+        # xdata = self.data['snsr_timeindex'].copy().values  
+        xdata = np.array(range(len(ydata)))     
+        
+        # cut ydata >= 0
+        # ydata_pos = ydata[ydata >= 0]
+
+        # print(xdata,ydata)
+               
+        # calculate initial temperature rise
+        t0 = ydata[0]
+        print(xdata,ydata,t0,tw)
+        # create function to be fitted
         def f_transient_tr(x, T):
             return tw * (1 - np.exp(-1 * x * 10 / T)) + t0 * np.exp(-1 * x * 10 / T)
+        
         # fitting
         const = optimize.curve_fit(f_transient_tr, xdata, ydata)[0][0]
         print('time constant T of {} is'.format(col_name), const)
+        
         # plt.figure(dpi=500, figsize=(10,6))
         fig, ax1 = plt.subplots(1, 1, dpi=200)
-        ax2 = ax1.twinx()
-        sns.set(color_codes=True)
+        # sns.set(color_codes=True)
+        ax2 = ax1.twinx()       
         rmse = self.get_rmse(f_transient_tr(xdata, const),
                              ydata)
+        
         # create scatter plot of testing data
         ax1.scatter(xdata, ydata, color='r', label='temperature rise tested')
+        
         # create line plot of fitted data with time const calculated from fitting
         ax1.plot(xdata,
                  f_transient_tr(xdata, const),
                  color='g',
                  label='temperature rise fitted')
+        
         # create line plot of difference data
         ax2.plot(xdata,
-                 f_transient_tr(xdata, const)-ydata,
+                 f_transient_tr(xdata, const) - ydata,
                  color='k',
                  label='difference with RMSE of {:.1f}'.format(rmse))
-        ax1.set_title('{} time constant fitting result'.format(col_name))
+        ax1.set_title('{} time constant is {:.0f}'.format(col_name,const))
         ax1.set_xlabel('sample point')
         ax1.set_ylabel('Temperature Rise (K)')
         ax2.set_ylabel('Difference (K)')
         ax1.legend(fontsize=7)
         ax2.legend(fontsize=7)
-        return const
+        self.x_idx_list = [
+            i * 360 for i in range(int(self.data.shape[0] / 360) + 1)]
+        self.x_str_list = [self.datetime_to_xtick(
+            self.data.iloc[i, -2]) for i in self.x_idx_list]
+        plt.xticks(self.x_idx_list, self.x_str_list)
+        # return const
 
     @ staticmethod
     def cal_dynamic_conver_const(xdata, ydata, **kwargs):
@@ -389,7 +467,39 @@ class TempRiseExperiment(object):
     def get_rmse(predictions, targets):
 
         return np.sqrt(((predictions - targets) ** 2).mean())
+    
+    def data_filter(self,col_name,low_lim,high_lim,diff_lim):
+        """method that find out point that beyond hard limit and point with instant change;
 
+        Args:
+        -------
+            col_name     - colunm data to be filtered
+            low_lim      - low hard limit
+            high_lim     - high hard limit
+            diff_lim     - changing limit
+
+
+        Return:
+        -------
+            NA   
+        Notes:
+        -------
+        """
+        diff = np.diff(self.data[col_name].values,prepend=self.data.loc[0,col_name])
+        for j in range(len(self.data)):
+            if  ((self.data.loc[j,col_name] > high_lim) or 
+                (self.data.loc[j,col_name] < low_lim)):
+                self.data.loc[j,col_name] = np.nan
+
+            else:
+                pass
+        for k in range(len(self.data)-1):
+            if 	(((diff[k] > diff_lim) or 
+                (diff[k] < -diff_lim)) & 
+                ((diff[k+1] > diff_lim) or 
+                (diff[k+1] < -diff_lim))):
+                self.data.loc[k,col_name] = np.nan
+       
 
 class DataClean(object):
 
@@ -527,6 +637,7 @@ class DataClean(object):
         print('sensor & couplers common end time =',
               end_time)
         j = 0
+        count = 0
         # perform on each group of data
         for element in data:
             j += 1
@@ -537,18 +648,24 @@ class DataClean(object):
                                   & (element['ind'] <= 4320), :]
 
             # check and fix that if there are any duplicated index
-            for k in range(len(element) - 1):
+            k = 0
+            while (k < len(element) - 1):
+                print('len element',len(element))
+                print('k',k)
                 if element.iloc[k, -1] == element.iloc[k + 1, -1]:
                     element = element.drop(k + 1)
+                    count += 1
                 else:
                     pass
+                k = k + 1
+            print('count',count)
             # check and fix that if there are any discontinued index
             if (element.iloc[-1, -1] - element.iloc[0, -1]) != (len(element) - 1):
                 print('%dth group of data has discontinued points' % j)
-                print('head,tail and length are ',
-                      element.loc[0, 'ind'],
-                      element.loc[-1, 'ind'],
-                      len(element))
+                # print('head,tail and length are ',
+                #       element.loc[0, 'ind'],
+                #       element.loc[-1, 'ind'],
+                #       len(element))
                 # build the full length index 
                 full_index = pd.Series(
                     range(element.iloc[0, -1], element.iloc[-1, -1] + 1))
