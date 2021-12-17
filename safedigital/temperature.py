@@ -211,6 +211,7 @@ class TempRiseExperiment(object):
                              'Sample Point')
         y_label = kwargs.get('y_label',
                              'Temperature Rise(K)')
+        sample_time = kwargs.get('sample_time',10)
 
         # figure
         fig, ax1 = plt.subplots(1, 1, dpi=200)
@@ -219,7 +220,7 @@ class TempRiseExperiment(object):
         # cut data as long as current data point list
         # when 'loc' command is used [a:b] include b 
         data_cut = self.data.loc[:len(cur_list) - 1 ,[col_name, 't_oil_bottle_1','snsr_datetime']].copy() 
-        data_cut[col_name] = data_cut[col_name] - data_cut['t_oil_bottle_1']
+        data_cut['tr'] = data_cut[col_name] - data_cut['t_oil_bottle_1']
 
         # build current time-variant data column
         data_cut['current'] = cur_list
@@ -230,12 +231,12 @@ class TempRiseExperiment(object):
         # print(data_cut['tao_w'])
        
         # build fitted temperature rise data column
-        tr_fit_list = ([data_cut.loc[0, col_name]] +
+        tr_fit_list = ([data_cut.loc[0, 'tr']] +
                        [0] * (len(cur_list) - 1))
         for k in range(1, len(cur_list)):
 
             tr_fit_list[k] = tr_fit_list[k - 1] + (data_cut.loc[k, 'tao_w'] - 
-            tr_fit_list[k - 1]) * (1 - np.exp(-10 / time_const))
+            tr_fit_list[k - 1]) * (1 - np.exp(-1 * sample_time / time_const))
         # print('tr_fit_list',tr_fit_list)
         if delay_const != 0:
             # prepend list with "delay_const" number of data points
@@ -244,23 +245,36 @@ class TempRiseExperiment(object):
             # cut list the last "const" number of element from its tail
             del tr_fit_list[-1 * delay_const:]
         data_cut['tr_fit'] = tr_fit_list
+        data_cut['tr_warning'] = data_cut['tr_fit'] + 18
+        data_cut['tr_alarm'] = data_cut['tr_fit'] + 28
+        for i in range(len(data_cut)):
+            if data_cut.loc[i,'tr'] < data_cut.loc[i,'tr_warning']:
+                data_cut.loc[i,'tr_si'] = 1
+            elif data_cut.loc[i,'tr_warning'] <= data_cut.loc[i,'tr'] < data_cut.loc[i,'tr_alarm']:
+                data_cut.loc[i,'tr_si'] = 2
+            elif data_cut.loc[i,'tr'] >= data_cut.loc[i,'tr_alarm']:
+                data_cut.loc[i,'tr_si'] = 3
+            else:
+                data_cut.loc[i,'tr_si'] = 0
         # idx_delay = np.array(data_cut.index) + delay_const
         
+        # generate warning, alarm, signal indicator data to mrc
+        output =  data_cut.loc[:,['tr_warning','tr_alarm','tr_si','current',col_name,'snsr_datetime']].copy()
         
         plt.plot(data_cut.index,
-                 data_cut[col_name],
+                 data_cut['tr'],
                  color='g',
                  label=col_name)
+        # plt.plot(data_cut.index,
+        #          data_cut['tr_fit'],
+        #          color='c',
+        #          label='tr_fit')
         plt.plot(data_cut.index,
-                 data_cut['tr_fit'],
-                 color='c',
-                 label='tr_fit')
-        plt.plot(data_cut.index,
-                 10 + data_cut['tr_fit'],
+                 data_cut['tr_warning'],
                  color='y',
                  label='tr_warning')
         plt.plot(data_cut.index,
-                 18 + data_cut['tr_fit'],
+                 data_cut['tr_alarm'],
                  color='r',
                  label='tr_alarm')
         ax2 = ax1.twinx()
@@ -270,7 +284,7 @@ class TempRiseExperiment(object):
                  linestyle=':',
                  color='k')
         xdata = [datetime.strftime(datetime.strptime(i, '%Y-%m-%d %H:%M:%S'),'%H:%M') for i in data_cut['snsr_datetime']]
-        plt.xticks(data_cut.index[::360],xdata[::360])        
+        plt.xticks(data_cut.index[::math.floor(3600/sample_time)],xdata[::math.floor(3600/sample_time)])        
         plt.title(title)
         plt.xlabel(x_label)
         ax1.set_ylabel(y_label)
@@ -287,6 +301,8 @@ class TempRiseExperiment(object):
 
         # show
         plt.show()
+        return output
+        
 
     def datetime_to_xtick(self, datetime_str):
         datetime_dt = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
@@ -363,7 +379,6 @@ class TempRiseExperiment(object):
         
         # cut ydata >= 0
         # ydata_pos = ydata[ydata >= 0]
-
         # print(xdata,ydata)
                
         # calculate initial temperature rise
