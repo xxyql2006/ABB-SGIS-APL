@@ -212,6 +212,7 @@ class TempRiseExperiment(object):
         tr_rated = kwargs.get('tr_rated', 0)
         correction_warning = kwargs.get('correction_warning', 8)
         correction_alarm = kwargs.get('correction_alarm', 10)
+        time_const_drop = kwargs.get('time_const_drop', time_const)
 
         # figure
         fig, ax1 = plt.subplots(1, 1, dpi=200)
@@ -237,13 +238,20 @@ class TempRiseExperiment(object):
                        [0] * (len(cur_list) - 1))
         t_alarm_list = ([data_cut.loc[0, col_name]] +
                        [0] * (len(cur_list) - 1))
+        # use different time constant "time_const_drop" when current is dropping
         for k in range(1, len(cur_list)):
-            t_warning_list[k] = t_warning_list[k - 1] + (data_cut.loc[k, 'tao_w_warning'] - 
-            t_warning_list[k - 1]) * (1 - np.exp(-1 * sample_time / time_const))
-            
-            t_alarm_list[k] = t_alarm_list[k - 1] + (data_cut.loc[k, 'tao_w_alarm'] - 
-            t_alarm_list[k - 1]) * (1 - np.exp(-1 * sample_time / time_const))
-
+            if cur_list[k] >= cur_list[k-1]:
+                t_warning_list[k] = t_warning_list[k - 1] + (data_cut.loc[k, 'tao_w_warning'] - 
+                t_warning_list[k - 1]) * (1 - np.exp(-1 * sample_time / time_const))               
+                t_alarm_list[k] = t_alarm_list[k - 1] + (data_cut.loc[k, 'tao_w_alarm'] - 
+                t_alarm_list[k - 1]) * (1 - np.exp(-1 * sample_time / time_const))
+            elif cur_list[k] < cur_list[k-1]:
+                t_warning_list[k] = t_warning_list[k - 1] + (data_cut.loc[k, 'tao_w_warning'] - 
+                t_warning_list[k - 1]) * (1 - np.exp(-1 * sample_time / time_const))               
+                t_alarm_list[k] = t_alarm_list[k - 1] + (data_cut.loc[k, 'tao_w_alarm'] - 
+                t_alarm_list[k - 1]) * (1 - np.exp(-1 * sample_time / time_const))
+            else:
+                print('current value error at {}th element'.format(k))
         # print('tr_fit_list',tr_fit_list)
         if delay_const != 0:
             # prepend list with "delay_const" number of data points
