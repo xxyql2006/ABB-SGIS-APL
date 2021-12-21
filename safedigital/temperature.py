@@ -185,7 +185,7 @@ class TempRiseExperiment(object):
         plt.show()
         # plt.close()
 
-    def t_dtr_plot(self, col_name, cur_list, time_const, conver_const, tr_rated, delay_const, **kwargs):
+    def t_dtr_plot(self, col_name, cur_list, time_const, conver_const, tr_warning, tr_alarm, delay_const, **kwargs):
         """Plotting dynamic temperature rise algorithm
         Args:
         -------
@@ -205,13 +205,13 @@ class TempRiseExperiment(object):
             NA
         """
         # keywords arguments list
-        title = kwargs.get('title',
-                           'DTR Performance of {}'.format(col_name))
-        x_label = kwargs.get('x_label',
-                             'Sample Point')
-        y_label = kwargs.get('y_label',
-                             'Temperature Rise(K)')
-        sample_time = kwargs.get('sample_time',10)
+        title = kwargs.get('title', 'DTR Performance of {}'.format(col_name))
+        x_label = kwargs.get('x_label', 'Sample Point')
+        y_label = kwargs.get('y_label', 'Temperature Rise(K)')
+        sample_time = kwargs.get('sample_time', 10)
+        tr_rated = kwargs.get('tr_rated', 0)
+        correction_warning = kwargs.get('correction_warning', 8)
+        correction_alarm = kwargs.get('correction_alarm', 10)
 
         # figure
         fig, ax1 = plt.subplots(1, 1, dpi=200)
@@ -221,32 +221,46 @@ class TempRiseExperiment(object):
         # when 'loc' command is used [a:b] include b 
         data_cut = self.data.loc[:len(cur_list) - 1 ,[col_name, 't_oil_bottle_1','snsr_datetime']].copy() 
         # data_cut['tr'] = data_cut[col_name] - data_cut['t_oil_bottle_1']
-
+        
         # build current time-variant data column
         data_cut['current'] = cur_list
-
+        # data_cut.to_csv('C:\\Users\\cnbofan1\\Desktop\\output.csv')
         # build steady-state temperature column
-        data_cut['tao_w'] = [(ele / 630) ** conver_const * tr_rated + data_cut.loc[i, 't_oil_bottle_1']
-                             for i, ele in enumerate(cur_list)]
+        data_cut['tao_w_warning'] = [(ele / 630) ** conver_const * tr_warning + data_cut.loc[i, 't_oil_bottle_1']
+                            for i, ele in enumerate(cur_list)]
+        data_cut['tao_w_alarm'] = [(ele / 630) ** conver_const * tr_alarm + data_cut.loc[i, 't_oil_bottle_1']
+                            for i, ele in enumerate(cur_list)]
         # print(data_cut['tao_w'])
        
-        # build fitted temperature rise data column
-        tr_fit_list = ([data_cut.loc[0, col_name]] +
+        # build temperature data structure
+        t_warning_list = ([data_cut.loc[0, col_name]] +
+                       [0] * (len(cur_list) - 1))
+        t_alarm_list = ([data_cut.loc[0, col_name]] +
                        [0] * (len(cur_list) - 1))
         for k in range(1, len(cur_list)):
+            t_warning_list[k] = t_warning_list[k - 1] + (data_cut.loc[k, 'tao_w_warning'] - 
+            t_warning_list[k - 1]) * (1 - np.exp(-1 * sample_time / time_const))
+            
+            t_alarm_list[k] = t_alarm_list[k - 1] + (data_cut.loc[k, 'tao_w_alarm'] - 
+            t_alarm_list[k - 1]) * (1 - np.exp(-1 * sample_time / time_const))
 
-            tr_fit_list[k] = tr_fit_list[k - 1] + (data_cut.loc[k, 'tao_w'] - 
-            tr_fit_list[k - 1]) * (1 - np.exp(-1 * sample_time / time_const))
         # print('tr_fit_list',tr_fit_list)
         if delay_const != 0:
             # prepend list with "delay_const" number of data points
-            tr_fit_list = [tr_fit_list[0]] * delay_const + tr_fit_list
-        
+            tr_warning_list = [t_warning_list[0]] * delay_const + t_warning_list       
             # cut list the last "const" number of element from its tail
-            del tr_fit_list[-1 * delay_const:]
-        data_cut['t_fit'] = tr_fit_list
-        data_cut['t_warning'] = data_cut['t_fit'] + 8
-        data_cut['t_alarm'] = data_cut['t_fit'] + 10
+            del tr_warning_list[-1 * delay_const:]
+
+            tr_alarm_list = [t_alarm_list[0]] * delay_const + t_alarm_list        
+            # cut list the last "const" number of element from its tail
+            del tr_alarm_list[-1 * delay_const:]
+        # data_cut['t_fit'] = tr_fit_list
+        data_cut['t_warning'] = t_warning_list
+        data_cut['t_warning'] = data_cut['t_warning'] + correction_warning
+        data_cut['t_alarm'] = t_alarm_list
+        data_cut['t_alarm'] = data_cut['t_alarm'] + correction_alarm
+
+
         for i in range(len(data_cut)):
             if data_cut.loc[i,col_name] < data_cut.loc[i,'t_warning']:
                 data_cut.loc[i,'t_si'] = 1
@@ -260,15 +274,29 @@ class TempRiseExperiment(object):
         
         # generate warning, alarm, signal indicator data to mrc
         output =  data_cut.loc[:,['t_warning','t_alarm','t_si','current',col_name,'snsr_datetime']].copy()
-        
+        if tr_rated != 0:
+            data_cut['tao_w_rated'] = [(ele / 630) ** conver_const * tr_rated + data_cut.loc[i, 't_oil_bottle_1']
+                            for i, ele in enumerate(cur_list)]
+            t_rated_list = ([data_cut.loc[0, col_name]] + [0] * (len(cur_list) - 1))
+            for k in range(1, len(cur_list)):
+                t_rated_list[k] = t_rated_list[k - 1] + (data_cut.loc[k, 'tao_w_rated'] - 
+                                   t_rated_list[k - 1]) * (1 - np.exp(-1 * sample_time / time_const))
+            if delay_const != 0:
+                # prepend list with "delay_const" number of data points
+                t_rated_list = [t_rated_list[0]] * delay_const + t_rated_list       
+                # cut list the last "const" number of element from its tail
+                del t_rated_list[-1 * delay_const:]
+            data_cut['t_rated'] = t_rated_list
+            plt.plot(data_cut.index,
+                    data_cut['t_rated'],
+                    color='c',
+                    label='t_fitted')
+
         plt.plot(data_cut.index,
                  data_cut[col_name],
                  color='g',
                  label=col_name)
-        # plt.plot(data_cut.index,
-        #          data_cut['t_fit'],
-        #          color='c',
-        #          label='t_fit')
+
         plt.plot(data_cut.index,
                  data_cut['t_warning'],
                  color='y',
@@ -421,6 +449,7 @@ class TempRiseExperiment(object):
         ax2.legend(fontsize=7)
         self.x_idx_list = [
             i * 360 for i in range(int(self.data.shape[0] / 360) + 1)]
+        # print('viewer',self.data.iloc[0, -2])
         self.x_str_list = [self.datetime_to_xtick(
             self.data.iloc[i, -2]) for i in self.x_idx_list]
         plt.xticks(self.x_idx_list, self.x_str_list)
