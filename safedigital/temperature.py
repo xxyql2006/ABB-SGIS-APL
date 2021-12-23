@@ -207,7 +207,7 @@ class TempRiseExperiment(object):
         # keywords arguments list
         title = kwargs.get('title', 'DTR Performance of {}'.format(col_name))
         x_label = kwargs.get('x_label', 'Sample Point')
-        y_label = kwargs.get('y_label', 'Temperature Rise(K)')
+        y_label = kwargs.get('y_label', 'Temperature (C)')
         sample_time = kwargs.get('sample_time', 10)
         tr_rated = kwargs.get('tr_rated', 0)
         correction_warning = kwargs.get('correction_warning', 8)
@@ -225,6 +225,7 @@ class TempRiseExperiment(object):
         # build current time-variant data column
         data_cut['current'] = cur_list
         # data_cut.to_csv('C:\\Users\\cnbofan1\\Desktop\\output.csv')
+        # print(data_cut.loc[1834,'current'])
         # build steady-state temperature column
         data_cut['tao_w_warning'] = [(ele / 630) ** conver_const * tr_warning + data_cut.loc[i, 't_oil_bottle_1']
                             for i, ele in enumerate(cur_list)]
