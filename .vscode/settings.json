@@ -18,5 +18,6 @@
             "command": "extension.execute",
             "priority": 4
         }
-    ]
+    ],
+    "git.ignoreLimitWarning": true
 }
