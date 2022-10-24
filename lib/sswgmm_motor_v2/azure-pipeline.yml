@@ -1,0 +1,38 @@
+# specific path build
+trigger:
+  branches:
+    include:
+    - master
+    - "*Iteration*"
+  paths:
+    include:
+#   TODO: change this
+# sswgmm_motor is included because of import dependency
+      - /async_services/
+      - /base_algorithm/
+      - /sswgmm_motor/
+      - /sswgmm_motor_v2/
+      - /sswgmm_mech/
+      - /math_tools/
+      - /Dockerfile
+      - /buildimage.sh
+      - /compile.py
+      - /main.py
+      - /unit_test/sswgmm_motor_v2/
+
+
+resources:
+- repo: self
+
+extends:
+  template: ../pipeline_template/py-imagebuild-pipeline-template.yml@self
+  parameters:
+#   TODO: change this
+    jobName: 'SswgmmMotorVer2jobci'
+    jobDisplayName: 'SSWG Motor V2.0 Monitoring Service CI'
+    repositoryName: 'abb.sam.apl.sswgmm-motor-v2'
+    imageOrg: apl
+    algorithm: sswgmm_motor_v2
+
+#   TODO: change this
+name: $(SourceBranchName)_sswgmm_motor_v2_$(date:yyyyMMdd)$(rev:.r)

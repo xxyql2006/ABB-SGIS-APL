@@ -1,0 +1,34 @@
+# specific path build
+trigger:
+  branches:
+    include:
+    - master
+    - "*Iteration*"
+  paths:
+    include:
+#   TODO: change this
+      - /async_services/
+      - /base_algorithm/
+      - /sswgmm_mech/
+      - /Dockerfile
+      - /buildimage.sh
+      - /compile.py
+      - /main.py
+      - /unit_test/sswgmm_mech/
+
+
+resources:
+- repo: self
+
+extends:
+  template: ../pipeline_template/py-imagebuild-pipeline-template.yml@self
+  parameters:
+#   TODO: change this
+    jobName: 'SswgmmMechjobci'
+    jobDisplayName: 'SSWG Mechanical Monitoring Service CI'
+    repositoryName: 'abb.sam.apl.sswgmm-mech'
+    imageOrg: apl
+    algorithm: sswgmm_mech
+
+#   TODO: change this
+name: $(SourceBranchName)_sswgmm_mech_$(date:yyyyMMdd)$(rev:.r)

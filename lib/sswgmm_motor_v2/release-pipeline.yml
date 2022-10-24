@@ -1,0 +1,22 @@
+# specific path build
+trigger:
+  branches:
+    include:
+    - release*
+
+
+resources:
+- repo: self
+
+extends:
+  template: ../pipeline_template/py-imagebuild-pipeline-template.yml@self
+  parameters:
+#   TODO: change this
+    jobName: 'SswgmmMotorVer2jobci'
+    jobDisplayName: 'SSWG Motor V2.0 Monitoring Service CI'
+    repositoryName: 'abb.sam.apl.sswgmm-motor-v2'
+    imageOrg: apl
+    algorithm: sswgmm_motor_v2
+
+#   TODO: change this
+name: $(SourceBranchName)_sswgmm_motor_v2_$(date:yyyyMMdd)$(rev:.r)

@@ -1,0 +1,21 @@
+# specific path build
+trigger:
+  branches:
+    include:
+    - release*
+
+resources:
+- repo: self
+
+extends:
+  template: ../pipeline_template/py-imagebuild-pipeline-template.yml@self
+  parameters:
+#   TODO: change this
+    jobName: 'SswgmmMechjobci'
+    jobDisplayName: 'SSWG Mechanical Monitoring Service CI'
+    repositoryName: 'abb.sam.apl.sswgmm-mech'
+    imageOrg: apl
+    algorithm: sswgmm_mech
+
+#   TODO: change this
+name: $(SourceBranchName)_sswgmm_mech_$(date:yyyyMMdd)$(rev:.r)
