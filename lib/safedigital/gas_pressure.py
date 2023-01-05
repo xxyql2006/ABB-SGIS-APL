@@ -10,8 +10,8 @@ from scipy import interpolate
 
 class GasPresExperiment_CN(object):
 	
-	def data_clean(cur_dir, test_date, test_id):
-
+	def data_clean(cur_dir, test_date, test_id, **kwargs):
+		sample_time = kwargs.get('sample_time', '1min')
 		test_folder = test_date + test_id  # test folder
 		folder_data_raw = cur_dir + '\\' + test_folder + '\\' + '0_Data original'  # raw data folder
 		# folder_data_clean = cur_dir + '\\' + test_folder + '\\' + '1_Data formatted'  # cleaned data folder

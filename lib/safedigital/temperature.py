@@ -1083,7 +1083,7 @@ class TempRiseExperiment(object):
         plt.ylabel('Temperature Rise (K)')
         plt.legend()
         plt.title(title)
-        return const
+        # return const
 
     @staticmethod
     def get_rmse(predictions, targets):
@@ -1129,7 +1129,7 @@ class TempRiseExperiment(object):
 
 
 class DataClean(object):
-
+    
     def read_sensor_data(path):
         """discontinued"""
         """method that read the data from intelligent temperature sensor,
@@ -1358,6 +1358,33 @@ class DataClean(object):
         raw_data = raw_data.fillna(0)
         raw_data.index = [datetime.strptime(raw_data.iloc[i, 1] + ':' + raw_data.iloc[i, 2],
                                                   '%Y/%m/%d:%H:%M:%S') for i in range(len(raw_data.iloc[:, 2]))]
+        # print(raw_data.columns)
+        return raw_data
+
+    def read_couple_flex_format(path, format):
+        """method that read the data from thermal couples with index of datetime 
+           in a flexible datetime format;
+
+        Args:
+
+            path      -     full path of the data file
+            format    -     format of datetime
+        Return:
+
+            output    -     data saved as Dataframe
+        Notes:
+
+
+        """
+        raw_data = pd.read_csv(path,
+                               header=25,
+                               na_values=['          ', '     -OVER','   INVALID'])
+
+        
+        raw_data.iloc[:, 4:].astype(float)
+        raw_data = raw_data.fillna(0)
+        raw_data.index = [datetime.strptime(raw_data.iloc[i, 1] + ':' + raw_data.iloc[i, 2],
+                                                  format) for i in range(len(raw_data.iloc[:, 2]))]
         # print(raw_data.columns)
         return raw_data
 
@@ -1609,13 +1636,14 @@ class DataClean(object):
 
         return data_list
 
-    def synch_logger_couple_1min(logger_df, couple_df):
+    def synch_logger_couple_resample(logger_df, couple_df, sample_time):
         """method that synchronize data of data_logger with groups of data of thermal couples;
 
         Args:
         -------
             logger_data_df - data of data_logger in DataFrame
             couple_data_df - data of thermal couples in DataFrame
+            sample_time    - string, default value is '1min', refer to np.resample settings
 
         Return:
         -------
@@ -1624,14 +1652,14 @@ class DataClean(object):
         -------
 
         """
-
         # resampling logger and couple data with an interval of 1min
-        logger_df_1min = logger_df.resample('1min').median()
-        couple_df_1min = couple_df.resample('1min').median()
-        
+        logger_df_resample = logger_df.resample(sample_time).median()
+        couple_df_resample = couple_df.resample(sample_time).median()
+        # print('logger_df', logger_df_resample)
+        # print('couple_df', couple_df_resample)
         # concatenate logger data with thermal couples data for rows with same index
-        sync_df = pd.concat((logger_df_1min, couple_df_1min), axis=1, join='inner')
-        
+        sync_df = pd.concat((logger_df_resample, couple_df_resample), axis=1, join='inner')
+        # print(sync_df)
         # Find the common start and ending time of t
         start_time = sync_df.index[0]
         end_time = sync_df.index[-1]
@@ -1640,6 +1668,36 @@ class DataClean(object):
     
         return sync_df
 
+    # def synch_logger_couple_5min(logger_df, couple_df):
+    #     """method that synchronize data of data_logger with groups of data of thermal couples;
+
+    #     Args:
+    #     -------
+    #         logger_data_df - data of data_logger in DataFrame
+    #         couple_data_df - data of thermal couples in DataFrame
+
+    #     Return:
+    #     -------
+    #         output         - synchronized list of data groups
+    #     Notes:
+    #     -------
+
+    #     """
+
+    #     # resampling logger and couple data with an interval of 1min
+    #     logger_df_1min = logger_df.resample('5min').median()
+    #     couple_df_1min = couple_df.resample('5min').median()
+        
+    #     # concatenate logger data with thermal couples data for rows with same index
+    #     sync_df = pd.concat((logger_df_1min, couple_df_1min), axis=1, join='inner')
+        
+    #     # Find the common start and ending time of t
+    #     start_time = sync_df.index[0]
+    #     end_time = sync_df.index[-1]
+    #     print('MDC4-M & thermal couples common start datetime :',start_time)
+    #     print('MDC4-M & thermal couples common end datetime :',end_time)
+    
+    #     return sync_df
 
     @staticmethod
     def down_sample(data, ratio):
@@ -1656,6 +1714,31 @@ class DataClean(object):
     def datetime_to_time(datetime_str):
         date_time_dt = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
         return date_time_dt.strftime('%H:%M:%S')
+
+    def data_clean_resample(cur_dir, test_date, test_id, **kwargs):
+        sample_time = kwargs.get('sample_time', '1min') # get sample_time data
+        datetime_format = kwargs.get('datetime_format', '%m/%d/%Y:%H:%M:%S') # get datetime format
+        test_folder = test_date + test_id  # test folder
+        folder_data_raw = cur_dir + '\\' + test_folder + '\\' + '0_Data original'  # raw data folder
+        file_name_sen = test_date[0:4] + '-' + test_date[4:6] + '-' + test_date[6:8] + '_TP.csv'  # sensor data file name
+        file_name_coup1 = test_date[0:4] + '-' + test_date[4:6] + '-' + test_date[6:8] + '_TC1.csv'  # thermal couples data file name
+        path_sensor = folder_data_raw + '\\' + file_name_sen  # file location of sensor data
+        path_coup1 = folder_data_raw + '\\' + file_name_coup1  # file location of coupler data
+        path_config = cur_dir + '\\' + test_folder + '\\' + '1_Data formatted' + '\\' + test_date + '_config_new.json'
+        raw_sen = DataClean.read_logger_data_DTR_PD(path_sensor)  # read MDC4-M data
+        raw_coup1 = DataClean.read_couple_flex_format(path_coup1, datetime_format)  # read thermal couples data
+        # print('raw_sen', raw_sen)
+        # print('raw_coup1', raw_coup1)
+        sync_df = DataClean.synch_logger_couple_resample(raw_sen, raw_coup1, sample_time)  # synchronize two data sets
+        # print(sync_df.index)
+        # print(sync_df.columns)
+        # rename columns based on .json config file
+        with open(path_config, 'r') as f:
+            config = json.load(f)
+        sync_df = sync_df.rename(columns=config)
+        print(sync_df.columns)
+        return sync_df
+        # sync_df.to_csv(path_data_clearn)
 
 # %%
 class TempRiseExperiment_Norway(object):
@@ -2300,3 +2383,276 @@ class TempRiseExperiment_IN(object):
             plt.xlabel(x_label)
             plt.ylabel(y_label)
             plt.legend(fontsize='7')
+
+class DynTempRise(object):
+    def find_bal_idx(data, col_list, sample_min):
+        """ find balance datetime index of columns
+            Args:
+            -------
+                col_list   - list of column names
+                data       - data in dataframe
+            Return:
+            -------
+                NA
+            Notes:
+            -------
+                NA
+        """   
+        data_copy = data.loc[:, col_list].copy()
+        sample_cyc_1h = int(60 / sample_min)
+        for k in range(sample_cyc_1h * 4, len(data_copy)):
+            diff = (data_copy.iloc[k, :] - 
+                    data_copy.iloc[k - sample_cyc_1h, :]).abs()
+            if (diff < 1.0).all(axis=None):
+                bal_idx = data_copy.index[k]
+                print('Temperature balance time is {}.'.format(bal_idx))
+                break
+            elif k == len(data_copy) - 1:
+                bal_idx = data_copy.index[k]
+                print('Temperature is not balanced.')  
+        return bal_idx  
+    
+    def cal_time_const(data, col_name, **kwargs):
+        """ find balance datetime index of columns
+            Args:
+            -------
+                col_list   - list of column names
+                data       - data in dataframe
+            Return:
+            -------
+                NA
+            Notes:
+            -------
+                NA
+        """
+        data_copy = data.copy()
+        amb_col_name = kwargs.get('amb_col_name', 't_oil_avg')
+        date = kwargs.get('date', '')
+        tw = max(data_copy[col_name] - data_copy[amb_col_name]) # max tr
+        print("tw is",tw)
+        ydata = data_copy[col_name].values - data_copy[amb_col_name].values # 
+        xdata = np.array(range(len(ydata)))
+        t0 = ydata[0]
+        # print(ydata)
+        def f_trans_tr(x, T):
+            return tw * (1 - np.exp(-1 * x * 5 / T)) +  t0 * np.exp(-1 * x * 5 / T)
+        const = optimize.curve_fit(f_trans_tr, xdata, ydata)[0][0]
+        print('time constant T of is', const)
+
+        # plotting time constant calculation result
+        fig, ax1 = plt.subplots(1, 1, dpi=200)
+        ax2 = ax1.twinx()
+        rmse = TempRiseExperiment.get_rmse(f_trans_tr(xdata, const),
+                                           ydata)
+        print('RMSE is ',rmse)
+        ax1.scatter(xdata, 
+                    ydata, 
+                    color='r', 
+                    label='temperature rise tested')
+        ax1.plot(xdata,
+                f_trans_tr(xdata, const),
+                color='g',
+                label='temperature rise fitted')
+
+        # create line plot of difference data
+        ax2.plot(xdata,
+                f_trans_tr(xdata, const) - ydata,
+                color='k',
+                label='difference with RMSE of {:.1f}'.format(rmse))
+        ax1.set_title('{} {} time constant is {:.0f}'.format(date, 
+                                                             col_name, 
+                                                             const))
+        ax1.set_xlabel('sample point')
+        ax1.set_ylabel('Temperature Rise (K)')
+        ax2.set_ylabel('Difference (K)')
+        ax1.legend(fontsize=7)
+        ax2.legend(fontsize=7)
+        return const               
+
+    def cal_dynamic_conver_const(xdata, ydata, tr_rated, **kwargs):
+        """method that calculate the DTR conversion constant of one data set;
+
+        Args:
+        -------
+            xdata   - x data to be fitted
+            ydata   - y data to be fitted
+
+        Return:
+        -------
+            const   - conversion constant calculated   
+        Notes:
+        -------
+            the last data point must be the TR rated (630A)
+        """
+        # initialize data
+        title = kwargs.get('title',
+                           'Fitting for DTR conversion constant')
+        xdata = np.array(xdata)
+        ydata = np.array(ydata)
+
+        # create function to be fitted
+        def f_steady_state_tr(x, a):
+            return (x / 630) ** a * tr_rated
+
+        # fitting
+        const = optimize.curve_fit(f_steady_state_tr,
+                                xdata,
+                                ydata)[0][0]
+        print('conversion constant a is',
+            const)
+        plt.figure(dpi=200)
+        sns.set(color_codes=True)
+        # create scatter plot of input data point
+        plt.scatter(xdata,
+                    ydata,
+                    color='r')
+        # create line plot of fitted curve
+        x_span = np.array(range(min(xdata),
+                                max(xdata) + 1,
+                                10))
+        plt.plot(x_span,
+                f_steady_state_tr(x_span, const),
+                color='g',
+                label='Conversion Constant is {:.2f}'.format(const))
+        plt.xlabel('current (A)')
+        plt.ylabel('Temperature Rise (K)')
+        plt.legend()
+        plt.title(title)
+        # return const
+    
+    def dtr_sim_plot(data, col_name, cur_col_name, tr_rated, tr_warn, tr_alarm, time_const, conver_const, **kwargs):
+        correction_warn = kwargs.get('correction_warn', 5)
+        correction_alarm = kwargs.get('correction_alarm', 5)
+        time_const_drop = kwargs.get('time_const_drop', time_const)
+        delay_const = kwargs.get('delay_const', 0)
+        title = kwargs.get('title', 'dtr simulation')
+        data_df = data.copy()
+        current = data_df[cur_col_name]
+        data_df['t_amb_avg'] = (data_df['t_oil_bottle_4'] +
+						data_df['t_oil_bottle_3'] +
+						data_df['t_oil_bottle_2'] +
+						data_df['t_oil_bottle_1'] * 4) / 4  
+        data_df['tw_rated'] = (current / 630) ** conver_const * tr_rated + data_df['t_amb_avg']
+                            
+        data_df['tw_warn'] = (current / 630) ** conver_const * tr_warn + data_df['t_amb_avg']
+
+        data_df['tw_alarm'] = (current / 630) ** conver_const * tr_alarm + data_df['t_amb_avg']
+        
+        # build temperature data structure
+        data_df['t_rated'] = 0
+        data_df['t_warn'] = 0
+        data_df['t_alarm'] = 0
+        data_df['si'] = 0
+        data_df.loc[data_df.index[0], 't_rated'] = data_df.loc[data_df.index[0], col_name]
+        data_df.loc[data_df.index[0], 't_warn'] = data_df.loc[data_df.index[0], col_name]
+        data_df.loc[data_df.index[0], 't_alarm'] = data_df.loc[data_df.index[0], col_name]
+        
+        # form temperature sequences
+        # use different time constant "time_const_drop" when current is dropping
+        for k in range(1, len(data_df)):
+            if data_df.loc[data_df.index[k], col_name] <= data_df.loc[data_df.index[k], 'tw_warn']:
+                data_df.loc[data_df.index[k], 't_rated'] = (data_df.loc[data_df.index[k - 1], 't_rated'] + 
+                                                            (data_df.loc[data_df.index[k], 'tw_rated'] - 
+                                                            data_df.loc[data_df.index[k - 1], 't_rated']) * 
+                                                            (1 - np.exp(-1 * 5 / time_const)))
+                data_df.loc[data_df.index[k], 't_warn'] = (data_df.loc[data_df.index[k - 1], 't_warn'] + 
+                                                            (data_df.loc[data_df.index[k], 'tw_warn'] - 
+                                                            data_df.loc[data_df.index[k - 1], 't_warn']) * 
+                                                            (1 - np.exp(-1 * 5 / time_const)))
+                data_df.loc[data_df.index[k], 't_alarm'] = (data_df.loc[data_df.index[k - 1], 't_alarm'] + 
+                                                            (data_df.loc[data_df.index[k], 'tw_alarm'] - 
+                                                            data_df.loc[data_df.index[k - 1], 't_alarm']) * 
+                                                            (1 - np.exp(-1 * 5 / time_const)))                                             
+            elif data_df.loc[data_df.index[k], col_name] > data_df.loc[data_df.index[k], 'tw_warn']:    
+                data_df.loc[data_df.index[k], 't_rated'] = (data_df.loc[data_df.index[k - 1], 't_rated'] + 
+                                                            (data_df.loc[data_df.index[k], 'tw_rated'] - 
+                                                            data_df.loc[data_df.index[k - 1], 't_rated']) * 
+                                                            (1 - np.exp(-1 * 5 / time_const_drop)))
+                data_df.loc[data_df.index[k], 't_warn'] = (data_df.loc[data_df.index[k - 1], 't_warn'] + 
+                                                            (data_df.loc[data_df.index[k], 'tw_warn'] - 
+                                                            data_df.loc[data_df.index[k - 1], 't_warn']) * 
+                                                            (1 - np.exp(-1 * 5 / time_const_drop)))
+                data_df.loc[data_df.index[k], 't_alarm'] = (data_df.loc[data_df.index[k - 1], 't_alarm'] + 
+                                                            (data_df.loc[data_df.index[k], 'tw_alarm'] - 
+                                                            data_df.loc[data_df.index[k - 1], 't_alarm']) * 
+                                                            (1 - np.exp(-1 * 5 / time_const_drop)))       
+            else:
+                print('current value error')
+        # delay 'delay_const' number of sampling points 
+        if delay_const != 0:
+            t_rated_list = list(data_df['t_rated'])
+            t_warn_list = list(data_df['t_warn'])
+            t_alarm_list = list(data_df['t_alarm'])
+            
+            # prepend list with "delay_const" number of data points
+            t_rated_list_delay = [t_rated_list[0]] * delay_const + t_rated_list
+            t_warn_list_delay = [t_warn_list[0]] * delay_const + t_warn_list
+            t_alarm_list_delay = [t_alarm_list[0]] * delay_const + t_alarm_list
+            
+            # cut list the last "const" number of element from its tail
+            del t_rated_list_delay[-1 * delay_const:]
+            del t_warn_list_delay[-1 * delay_const:]
+            del t_alarm_list_delay[-1 * delay_const:]
+
+            data_df['t_rated'] = t_rated_list_delay
+            data_df['t_warn'] = t_warn_list_delay
+            data_df['t_alarm'] = t_alarm_list_delay
+        else:
+            pass
+            
+        # adding correction const to warning and alarm values
+        data_df['t_warn'] = data_df['t_warn'] + correction_warn
+        data_df['t_alarm'] = data_df['t_alarm'] + correction_alarm
+
+        # form the signal indicator data column
+        
+        for i in range(len(data_df)):
+            if (0 <= data_df.loc[data_df.index[i], col_name] < 
+                data_df.loc[data_df.index[i], 't_warn']):
+                data_df.loc[data_df.index[i], 't_si'] = 1
+            elif (data_df.loc[data_df.index[i], 't_alarm'] > 
+                  data_df.loc[data_df.index[i], col_name] >= 
+                  data_df.loc[data_df.index[i], 't_warn']):         
+                data_df.loc[data_df.index[i], 't_si'] = 2
+
+            elif (data_df.loc[data_df.index[i], col_name] > 
+                  data_df.loc[data_df.index[i], 't_alarm']):
+                data_df.loc[data_df.index[i], 't_si'] = 3
+
+            else:
+                data_df.loc[data_df.index[i], 't_si'] = 0
+
+        # figure
+        fig, ax1 = plt.subplots(1, 1, dpi=200)
+        # plt.scatter(data_df.index,
+        #             data_df['t_rated'],
+        #             s=5,
+        #             color='c',
+        #             marker='x',
+        #             label='t_rated_scatter')
+        plt.plot(data_df['t_rated'],
+                color='c',
+                label='t_rated_plot')
+        plt.plot(data_df[col_name],
+                color='g',
+                label=col_name)
+        plt.plot(data_df['t_warn'],
+                color='y',
+                label='t_warn')
+        plt.plot(data_df['t_alarm'],
+                color='r',
+                label='t_alarm')
+
+        ax2 = ax1.twinx()
+        ax2.plot(data_df[cur_col_name],
+                label='current',
+                linestyle=':',
+                color='k')
+
+        plt.title(title)
+        ax1.set_ylabel('Temperature (C)')
+        ax2.set_ylabel('Time Variant Current (A)')
+        ax1.legend(fontsize=7)
+        ax2.legend(fontsize=7)
+        ax1.tick_params(labelsize=7)
+        ax2.tick_params(labelsize=7)
