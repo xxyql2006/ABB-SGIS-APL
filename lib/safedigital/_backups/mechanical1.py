@@ -84,8 +84,8 @@ class MechOper(object):
 		speed = np.abs((pt_1 - pt_0) / t)
 		return speed
 
-	# def find_intersection(curve, value):
-	# 	return np.argmin(np.abs(curve - value))
+	def find_intersection(self, curve, value):
+		return np.argmin(np.abs(curve - value))
 
 	def box_plot(label_list,data_df,color_list):
 		# for i in range(len(data_df)):
@@ -255,21 +255,15 @@ class DataClean():
 	# 	sec = str_sep_list[5]
 	# 	date_time = date_time.strp
 
-class MechOperMconfig(object): 
+class MechOperMconfig(): 
 	# """Class of a single mechanical operation recorded by Mconfig 1.5.0"""
 	   
-	def __init__(self, cur_dir, file):
-		self.angle_df = pd.read_csv(os.path.join(cur_dir, file), header=0)
-		self.angle_arr = np.array(self.angle_df['data'])
-		self.break_deg = 0
-		if 'travel_open' in file:
-			self.oper_type = 'O'
-		elif 'travel_close' in file:
-			self.oper_type = 'C'
-		else:
-			self.oper_type = 'U'
+	# def __init__(self):
+	# 	self.angle = self.travel_curve_df['data'].values
+	# self.head = np.mean(self.angle[:50])
+	# self.tail = np.mean(self.angle[-50:])
 	
-	def cal_travel(self, head, tail):
+	def cal_travel(head, tail):
 		"""
 		Find the total travel in degree
 		@head: avg value of the head of the curve
@@ -282,167 +276,27 @@ class MechOperMconfig(object):
 		angle_open, angle_close = np.sort([head, tail])
 		travel = angle_close - angle_open
 		return travel, angle_open, angle_close
-	
-	@staticmethod
-	def find_intersection(curve, value):
-		return np.argmin(np.abs(curve - value))
-	
-	def find_1st_pole(curve):
-		diff = np.diff(curve)
-		pole_idx = 0
-		for idx in range(len(diff) - 1):
-			if diff[idx] == 0:
-				pole_idx = idx
-				break
-			elif diff[idx + 1] == 0:
-				pole_idx = idx + 1
-				break
-			elif (diff[idx] * diff[idx + 1]) < 0:	
-				pole_idx = idx + 1
-				break
-			else:
-				pass
-		return pole_idx
 
-
-
-	def cal_speed(self, travel, angle_close, **kwargs):
-		"""
-        calculate the average speed of the operation
-        @param angle_curve: input angle sensor reading
-        @param op_type: operation type, 'O', 'C' or 'U'
-        @param travel: travel in degree
-        @param angle_close: the angle close degree
-        @return:
-        speed: the average speed of the operation
-        """
-		time_step = kwargs.get('time_step', 0.4) # mili second
-		open_break_angle = kwargs.get('open_break_angle', 11) # degree
-		close_break_angle = kwargs.get('close_break_angle', 11) #degree
-		open_t1_tb_ratio = kwargs.get('open_t1_tb_per', 0.15) # ratio
-		open_t2_tb_ratio = kwargs.get('open_t2_t1_ratio', 0.75) # ratio
-		close_t2_tb_ratio = kwargs.get('open_t1_tb_per', 0.15) # ratio 
- 
-		if self.oper_type == 'O':
-			self.break_deg = angle_close - open_break_angle
-			pt_0 = self.break_deg - open_t1_tb_ratio * travel
-			pt_1 = self.break_deg - open_t2_tb_ratio * travel
-
-		elif self.oper_type == 'C':
-			self.break_deg = angle_close - close_break_angle		
-			pt_0 = self.break_deg - close_t2_tb_ratio * travel
-			pt_1 = self.break_deg
-
-		pt_0_ix = MechOperMconfig.find_intersection(self.angle_arr, pt_0)
-		pt_1_ix = MechOperMconfig.find_intersection(self.angle_arr, pt_1)	
-		t = (pt_1_ix - pt_0_ix) * time_step
-		speed = np.abs((pt_1 - pt_0) / t)
-		return speed
-
-	# def angle_start_pt(curve, op_type, low, high):
+	# def cal_travel_speed(self, angle_curve, op_type, travel, angle_close,**kwargs):
 	# 	"""
-	# 	Find where the first angle bend is; semi-obsolete method due to document
-	# 	updates
-	# 	@param curve: input sensor reading, np array of shape (-1)
-	# 	@param op_type: operation type, 'O' for open, 'C' for close or 'U' for unknown
-	# 	@param low: lower value of the curve
-	# 	@param high: higher of the curve
-	# 	@return:
-	# 	start_pt: the first angle bend's index
-	# 	"""
-	# 	x = len(curve)
-	# 	# normalize and rescale the curve
-	# 	# this op shifts tail away from anchor
-	# 	_curve = (curve - low) / (high - low) * x
-	# 	if op_type == 'C':
-	# 		y = -1000
-	# 	elif op_type == 'O':
-	# 		y = 100 + x
-	# 	else:
-	# 		raise ValueError('Incorrect op type {}.'.format(op_type))
-	# 	anchor = np.array([x, y]).reshape(1, 2)
-	# 	_curve = np.concatenate([np.arange(0, len(curve), 1).reshape(-1, 1), _curve.reshape(-1, 1)], axis=1)
-	# 	diff = np.linalg.norm(anchor - _curve, axis=1)
-	# 	start_pt = np.argmin(diff)
-	# 	return start_pt
-
-	# def cal_overshoot_close(self, angle_close):
-	# 	"""method that calculate overshoot for open operation; 
-
-	# 	Args:
-	# 		angle_open	-	the angle open degree
-
-	# 	Return:
-	# 		overshoot	-	overshoot in degree	
-	# 		rebound		-	rebound in degree
-			
-	# 	Notes:
-
-	# 	"""
-	# 	break_deg_idx = MechOperMconfig.find_intersection(self.angle_arr, self.break_deg)
-	# 	curve_after_break = self.angle_arr[break_deg_idx:].copy()
-	# 	overshoot_idx = MechOperMconfig.find_1st_pole(curve_after_break) + break_deg_idx
-	# 	pole_1st_deg = curve_after_break[MechOperMconfig.find_1st_pole(curve_after_break)]
-	# 	over_shoot = pole_1st_deg - angle_close
-	# 	return over_shoot, overshoot_idx
-
-	def cal_overshoot_close(self, angle_close):
-		"""
-		calculate the mechanism's closing overshoot
-		@param curve: input angle sensor reading, np array of shape (-1)
-		@param start_pt: where the first angle bend is, integer
-		@param angle_close: the angle close degree
-		@return: (_overshoot, _overshoot_ix)
-		_overshoot: the amount of overshoot
-		_overshoot_ix: where the overshoot occurs on the curve
-		"""
-		start_pt = MechOperMconfig.find_intersection(self.angle_arr,
-													 self.break_deg)
-		curve = self.angle_arr.copy()
-		after_start = curve[start_pt:]
-		_overshoot = np.clip(after_start.max() - angle_close, 0, np.inf)
-		overshoot_ix = np.argmax(after_start) + start_pt
-		return _overshoot, overshoot_ix
-
-	def cal_rebounce_overshoot_open(self, angle_open):
-		"""
-		For an opening operation, calculate its rebound and overshoot
-		@param curve: input angle sensor reading, np array of shape (-1)
-		@param start_pt: where the first angle bend is, integer
-		@param angle_open: angle_close: the angle open degree
-		@return:
-		_rebound: the amount of rebound
-		rebound_ix: where the rebound occurs on the curve
-		_overshoot: the amount of overshoot
-		overshoot_ix: where the overshoot occurs on the curve
-		"""
-		start_pt = MechOperMconfig.find_intersection(self.angle_arr,
-													 self.break_deg)
-		curve = self.angle_arr.copy()
-		after_start = curve[start_pt:]
-		cum_min = np.minimum.accumulate(after_start)
-		rev_cum_max = np.maximum.accumulate(after_start[::-1])[::-1]
-		overshoot_ix = np.argmax(rev_cum_max - cum_min) + start_pt
-		# overshoot is defined to be positive, refer to document
-		_overshoot = np.clip(angle_open - curve[overshoot_ix], 0, np.inf)
-		# calculate rebound
-		# find all bumps after start_pt
-		partitions = after_start - cum_min
-		sessions_split = np.where(partitions == 0)[0].tolist() + [len(curve) - start_pt]
-		sessions_split = np.array(sessions_split).astype(np.int)
-		integrals = []
-		# integrate all areas under bumps
-		for i in range(len(sessions_split) - 1):
-			ix_0 = sessions_split[i]
-			ix_1 = sessions_split[i + 1]
-			integrals.append(partitions[ix_0: ix_1].sum())
-		# find the biggest bump, assuming all other small bumps are caused by noise
-		max_integral_ix = np.argmax(integrals)
-		# get rebound index
-		rebound_start, rebound_end = sessions_split[[max_integral_ix, max_integral_ix + 1]]
-		rebound_ix = np.argmax(after_start[rebound_start: rebound_end]) + start_pt + rebound_start
-		_rebound = np.clip(curve[rebound_ix] - angle_open, 0, np.inf)
-		return _rebound, rebound_ix, _overshoot, overshoot_ix
+    #     calculate the average speed of the operation
+    #     @param angle_curve: input angle sensor reading
+    #     @param op_type: operation type, 'O', 'C' or 'U'
+    #     @param travel: the total amount of travel
+    #     @param angle_close: the angle close degree
+    #     @return:
+    #     speed: the average speed of the operation
+    #     """
+	# 	break_deg_dif = kwargs.get('break_deg_dif', )
+	# 	break_deg = angle_close - break_deg_dif  # degree
+	# 	pt_0 = self.break_degree - config[op_type + '0'] * travel  # degree
+	# 	pt_0_ix = self.find_intersection(curve, pt_0)  # time in index
+	# 	pt_1 = self.break_degree - config[op_type + '1'] * travel  # degree
+	# 	self.break_degree_ix = pt_0_ix  # time in index
+	# 	pt_1_ix = self.find_intersection(curve, pt_1)  # time in index
+	# 	t = (pt_1_ix - pt_0_ix) * self.time_step  # time in milli-second
+	# 	speed = np.abs((pt_1 - pt_0) / t)
+	# 	return speed
 
 	def plot_all_csv(dir_data:str, curve_type:str):
 		"""method that plot all csv curves under dir_data folder; 
