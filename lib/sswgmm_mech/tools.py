@@ -1,4 +1,4 @@
-from base_algorithm import SignalIndicator
+# from base_algorithm import SignalIndicator
 import numpy as np
 from scipy import signal
 import json

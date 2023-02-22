@@ -1,6 +1,7 @@
 from typing import OrderedDict
 import matplotlib.gridspec as gridspec
 import os
+import json
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -8,6 +9,8 @@ import matplotlib.pyplot as plt
 from scipy import signal
 from scipy import stats
 from datetime import datetime
+from sswgmm_mech.tools import curve_smoothing, step_function
+from sklearn.tree import DecisionTreeRegressor
 sns.set(color_codes=True)
 
 
@@ -18,13 +21,12 @@ class MechOper(object):
 	   This data file has its data label on the 0th column
     """       
 	def __init__(self,data_path):
-		
+		# read data with file path
 		self.data = pd.read_csv(data_path,header=5)
 		self.time_step = 400 # in micro-second
 		# self.head = 0
 		# self.tail = 0
-
-		
+	
 	def find_head_tail(angle):
 		"""
 		@angle: angle sensor reading
@@ -236,32 +238,18 @@ class DataClean():
 		print(travel_path_list)
 
 
-
-
-
-
-
-
-
-
-
-	# def str_to_datetime(str):
-	# 	str_sep_list = str.split('_')
-	# 	year_str = str_sep_list[0]
-	# 	month_str = str_sep_list[1]
-	# 	day_str = str_sep_list[2]
-	# 	hour_str = str_sep_list[3]
-	# 	min = str_sep_list[4]
-	# 	sec = str_sep_list[5]
-	# 	date_time = date_time.strp
-
 class MechOperMconfig(object): 
 	# """Class of a single mechanical operation recorded by Mconfig 1.5.0"""
 	   
-	def __init__(self, cur_dir, file):
+	def __init__(self, cur_dir, file, config_path):
+		with open(config_path, 'r') as fh:
+			self.configuration = json.load(fh)
 		self.angle_df = pd.read_csv(os.path.join(cur_dir, file), header=0)
 		self.angle_arr = np.array(self.angle_df['data'])
 		self.break_deg = 0
+		self.time_step = 0.4 # mili second
+		self.file_name = file
+		# self.coil_current_arr = np.array()
 		if 'travel_open' in file:
 			self.oper_type = 'O'
 		elif 'travel_close' in file:
@@ -597,3 +585,102 @@ class MechOperMconfig(object):
 		# fig.savefig('./%s/%s/%s-%s%s' % ('_figs', METstCode, METstCode, title, '.png'), dpi=600)
 
 
+	def current_features(self, curve):
+		"""
+		created by Wei.Zheng, different from MDC4-M
+
+		Given a current curve, calculate its features
+		@param curve: input current sensor reading, np array of shape (-1), in unit mA
+		@return:
+		start: where the current starts to rise, refer to doc session 3.3.7
+		plateau_start: index of where the plateau session starts
+		valley: index of where the valley is at; obsolete output
+		plateau_end: index of where the plateau session ends
+		plateau_rms: the mean value of the plateau session, converted to A
+		"""
+		reg = DecisionTreeRegressor(max_depth=3, max_leaf_nodes=3)
+		tmp = curve_smoothing(curve, self.configuration)
+		# try:
+		steps, pred, is_step_function = step_function(tmp, reg)
+		if not is_step_function:
+			self.warning_message.append(
+				'Poor current signal quality: not a step function.'
+			)
+		# except:
+		# 	print(self.file_name)
+		# if the current is upside down, flip it
+		if (steps[1] < steps[0]) & is_step_function:
+			base = steps[0]
+			tmp = 2 * base - tmp
+			curve = 2 * base - curve
+
+		steps_ix = [np.where(pred == steps[x])[0][-1] for x in [0, 1]]
+		
+		# start point
+		search_end = steps_ix[0]
+		anchor = np.array([search_end + 500, tmp[search_end] - 5000]).reshape(1, 2)
+		_curve = np.concatenate(
+			[np.arange(0, search_end, 1).reshape(-1, 1),
+			curve[:search_end].reshape(-1, 1)], axis=1)
+		start = np.argmin(np.linalg.norm(_curve - anchor, axis=1))
+
+		# valley
+		search_start = steps_ix[0]
+		search_end = steps_ix[1]
+		cum_max = np.maximum.accumulate(curve[search_start: search_end])
+		flats, cts = np.unique(cum_max, return_counts=True)  # find cum_max plateaus
+		flats = flats[np.where(cts >= 3)[0]]  # get rid of small plateau
+		flats_ix = [np.where(cum_max == x)[0] for x in flats]  # plateau indices
+		
+		# find valley
+		valleys = [cum_max[x] - curve[x + search_start] for x in flats_ix]
+		valley = 0
+		for n, i in enumerate(valleys):
+			if i.max() > 0.1:  # unit in Amp
+				ix = flats_ix[n]
+				valley = search_start + np.argmax(cum_max[ix] - curve[ix + search_start]) + ix[0]
+				break
+
+		# plateau start
+		if valley != 0:
+			search_start = valley
+		else:
+			search_start = start
+		cm = np.cumsum(tmp - steps[0])
+		cm = cm / cm.max() * tmp.max()
+		mod = tmp - cm
+		plateau_start = np.argmax(mod[search_start: search_end]) + search_start
+		
+		# plateau end
+		search_start = len(curve) - 1 - steps_ix[1]
+		search_end = len(curve) - 1 - plateau_start
+		curve_rev = tmp[::-1]  # reverse the curve
+		cm = np.cumsum(curve_rev - steps[-1])
+		cm = cm / cm.max() * curve_rev.max()
+		mod_rev = curve_rev - cm
+		plateau_end = len(curve) - 1 - np.argmax(mod_rev[search_start: search_end]) - search_start  # plateau end point
+		plateau_rms = np.sqrt(np.mean(np.square(curve[plateau_start: plateau_end] - steps[0])))  # in A
+
+		# order of points: start, valley, plateau_start, plateau_end
+		if (valley == 0 or valley <= start or
+				start >= plateau_start or plateau_end <= plateau_start):
+			self.warning_message.append(
+				'Poor current quality: signal shape does not meet expectation.'
+			)
+		return start, plateau_start, valley, plateau_end, plateau_rms
+
+	def cal_op_time(self, start):
+		"""
+		calculate the operation time
+		@param start: time at where the current first start to rise; refer to doc session 3.3.8
+		@return:
+		_op_time: the total operation time
+		"""
+		self.break_deg_ix = self.find_intersection(self.angle_arr, self.break_deg)
+		_op_time = (self.break_deg_ix - start) * self.time_step
+		_op_time = np.clip(_op_time, 0, np.inf)
+		if _op_time <= 0:
+			message = ('operation time is less than zero, '
+						'start = {}, break = {}'.format(start, self.break_degree))
+			self.warning_message.append(message)
+		return _op_time

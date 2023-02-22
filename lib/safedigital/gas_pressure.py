@@ -58,7 +58,26 @@ class GasPresExperiment_CN(object):
 			data_raw.loc[k, col_name] = np.around(f_drop(k), 2)
 		data_raw.index = data_df.index
 		return data_raw
+	
+	def read_logger_data(path):
+            """method that read the data sampled by TR,GP,DTR,PD data logger,
+            Args:
+                path                - full path of the data file
+            Return:
+                raw_data_sliced     - raw data cutted from starting index to ending index
+            Notes:
+            """
+            raw_data = pd.read_csv(path, header=0)
+            raw_data = raw_data.dropna()
 
+            # convert string data to float
+            raw_data.iloc[:, 1 :].astype(float)
+            
+            # convert str to datetime
+            raw_data.index = [datetime.strptime(raw_data.loc[i, 'Time'], '%Y-%m-%d %H:%M:%S') for i in range(len(raw_data))]
+    
+            return raw_data
+			
 class GasPresExperiment_IN(object):
 
 	def __init__(self, file_path):
