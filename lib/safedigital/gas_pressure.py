@@ -23,7 +23,7 @@ class GasPresExperiment_CN(object):
 		# path_data_clearn = folder_data_clean + '\\' + '%s_data_clean_1min.csv' % (test_date)
 		raw_sen = TR.DataClean.read_logger_data_DTR_PD(path_sensor)  # read MDC4-M data
 		raw_coup1 = TR.DataClean.read_couple_datetime(path_coup1)  # read thermal couples data
-		sync_df = TR.DataClean.synch_logger_couple_1min(raw_sen, raw_coup1)  # synchronize two data sets
+		sync_df = TR.DataClean.synch_logger_couple_resample(raw_sen, raw_coup1, sample_time)  # synchronize two data sets
 		# print(sync_df.index)
 		# print(sync_df.columns)
 		# rename columns based on .json config file
@@ -60,24 +60,52 @@ class GasPresExperiment_CN(object):
 		return data_raw
 	
 	def read_logger_data(path):
-            """method that read the data sampled by TR,GP,DTR,PD data logger,
-            Args:
-                path                - full path of the data file
-            Return:
-                raw_data_sliced     - raw data cutted from starting index to ending index
-            Notes:
-            """
-            raw_data = pd.read_csv(path, header=0)
-            raw_data = raw_data.dropna()
+			"""method that read the data sampled by TR,GP,DTR,PD data logger,
+			Args:
+				path                - full path of the data file
+			Return:
+				raw_data_sliced     - raw data cutted from starting index to ending index
+			Notes:
+			"""
+			raw_data = pd.read_csv(path, header=0)
+			raw_data = raw_data.dropna()
 
-            # convert string data to float
-            raw_data.iloc[:, 1 :].astype(float)
-            
-            # convert str to datetime
-            raw_data.index = [datetime.strptime(raw_data.loc[i, 'Time'], '%Y-%m-%d %H:%M:%S') for i in range(len(raw_data))]
-    
-            return raw_data
+			# convert string data to float
+			raw_data.iloc[:, 1 :].astype(float)
 			
+			# convert str to datetime
+			raw_data.index = [datetime.strptime(raw_data.loc[i, 'Time'], '%Y-%m-%d %H:%M:%S') for i in range(len(raw_data))]
+
+			return raw_data
+
+	def cal_vapor_pressure(tc, p_mbar, formula_type):
+		
+		tk = tc + 273.15
+		if formula_type == 'buck_ei':
+			es = (1.0003 + 4.18 * 1e-6 * p_mbar) * 6.1115 * np.exp((22.452 * tc) / (272.55 + tc))
+		
+		elif formula_type == 'buck_ew':
+			es = (1.0007 + 3.46 * 1e-6 * p_mbar) * 6.1121 * np.exp((17.502 * tc) / (240.97 + tc))
+		
+		elif formula_type == 'sonntag':
+			es = np.exp(-6096.9385 / tk + 
+						16.635794 - 
+						2.711193 * 10 ** (-2) * tk + 
+						1.673952 * 10 ** (-5) * tk ** 2 + 
+						2.433502 * np.log(tk)) # mbar
+			
+		elif formula_type == 'buck_no_P_ei':
+			es =  6.1115 * np.exp((22.452 * tc) / (272.55 + tc))
+		
+		elif formula_type == 'buck_no_P_ew':
+			es = 6.1121 * np.exp((17.502 * tc) / (240.97 + tc))
+		
+		else:
+			print('formula type error')
+			es = 0
+		
+		return es
+
 class GasPresExperiment_IN(object):
 
 	def __init__(self, file_path):

@@ -598,8 +598,15 @@ class MechOperMconfig(object):
 		plateau_end: index of where the plateau session ends
 		plateau_rms: the mean value of the plateau session, converted to A
 		"""
+		
 		reg = DecisionTreeRegressor(max_depth=3, max_leaf_nodes=3)
 		tmp = curve_smoothing(curve, self.configuration)
+		# plt.figure(dpi=300)
+		# plt.subplot(2,1,1)
+		# plt.plot(curve)
+		# plt.subplot(2,1,2)
+		# plt.plot(tmp)
+		# tmp = curve
 		# try:
 		steps, pred, is_step_function = step_function(tmp, reg)
 		if not is_step_function:
