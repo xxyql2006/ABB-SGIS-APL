@@ -145,7 +145,44 @@ class DataClean():
 					wave_list_narray = np.concatenate((wave_list_narray, 
 													wave_narray.reshape(-1,1)), 
 													axis=1)
-	
+
+	def plot_curve_mconfig(path, **kwargs):
+		"""method that read any type of mechanical data recorded by Mconfig
+		For Mconfig newer than 1.5.6;
+
+		Args:
+			path          - path of data file
+
+		Return:
+			data_narray   - data in numpy array
+
+		Notes:
+
+		"""
+		lw = kwargs.get('lw', 1)
+		title = kwargs.get('title','curves')
+		plot_color = kwargs.get('plot_color','g')
+		y_label = kwargs.get('y_label', 'value')
+		# read data
+		with open(path, "r", encoding='utf-8') as f:
+			data = f.read()
+		# print(data)
+		wave_list = data.split("Wave ID:") # every wave starts with "WaveID"
+		# print(wave_list)
+		plt.figure(dpi=200)
+		plt.title(title)
+		plt.xlabel('time')
+		plt.ylabel(y_label)
+		for num, wave_str in enumerate(wave_list):
+			if wave_str == '':
+				pass
+			else:
+				start_idx = wave_str.find('Waveform Data:') + len('Waveform Data:')
+				data_list = wave_str[start_idx:].split(',')
+				data_narray = np.array(data_list).astype('float64')
+				plt.plot(data_narray, c=plot_color, linewidth=lw)
+
+
 	def filtered_curve(curve, **kwargs):
 		lp_N = kwargs.get('lp_N', 8)
 		lp_Wn = kwargs.get('lp_Wn', 200)
@@ -237,6 +274,64 @@ class DataClean():
 				pass
 		print(travel_path_list)
 
+	def txt_to_csv(dir_raw, dir_washed):
+		"""method that re-orgnize the waveform files of
+			Mconfig into single .csv for each waveform;
+			Applicable for MConfig 1.5.6 and latter
+
+		Args:
+			dir_raw	-	folder of mconfig waveform files
+			dir_washed - folder of washed .csv files
+
+		Return:
+
+
+		Notes:
+
+		"""
+
+		travel_path_list = []
+		wave_class_dict = {'角度(合闸).txt': 'travel_close', '角度(分闸).txt': 'travel_open',
+						   '合闸电流(合闸).txt': 'current_close', '分闸电流(分闸).txt': 'current_open',
+						   '储能电流(储能).txt': 'current_motor'}
+		for cur_dir, dirs, files in os.walk(dir_raw):
+			print(cur_dir)
+			for wave_class in wave_class_dict.keys():
+				if wave_class in files:
+					wave_path = os.path.join(cur_dir, wave_class)
+					# print(travel_path)
+					travel_path_list.append(wave_path)
+					with open(wave_path, "r", encoding='utf-8') as f:
+						data = f.read()
+					wave_list = data.split("Wave ID:")
+					# since the 1st element is blank, wave data splitting from 2nd element
+					for wave_str in wave_list[1:]:
+						# extract timestamp to be name of waveform file
+						time_stamp_start_idx = wave_str.find('Waveform Time:') + len('Waveform Time:')
+						time_stamp_end_idx = wave_str.find(';Sampling Frequency(ms)')
+						time_stamp_str = wave_str[time_stamp_start_idx: time_stamp_end_idx]
+
+						# change format of time stamp into 'XX_XX_XX'
+						time_stamp_num = time_stamp_str.replace(' ', '_')
+						time_stamp_num = time_stamp_num.replace(':', '_')
+						time_stamp_num = time_stamp_num.replace('-', '_')
+
+						# extract waveform data
+						wave_data_start_idx = wave_str.find('Waveform Data:') + len('Waveform Data:')
+						wave_data_str = wave_str[wave_data_start_idx:]
+						wave_data_df = pd.DataFrame({'Data': wave_data_str.split(',')})
+
+						# export data into .csv file
+						wave_file_name = time_stamp_num + '_' + wave_class_dict[wave_class]
+						wave_data_df.to_csv(dir_washed + '\\' + wave_file_name + '.csv')
+
+
+					else:
+						pass
+			else:
+				pass
+			print(travel_path_list)
+
 
 class MechOperMconfig(object): 
 	# """Class of a single mechanical operation recorded by Mconfig 1.5.0"""
@@ -249,6 +344,9 @@ class MechOperMconfig(object):
 		self.break_deg = 0
 		self.time_step = 0.4 # mili second
 		self.file_name = file
+		self.datetime_str = self.file_name[:self.file_name.find('travel')]
+		self.open_current_name = self.datetime_str + '_current_open'
+		self.close_current_name = self.datetime_str + '_current_close'
 		# self.coil_current_arr = np.array()
 		if 'travel_open' in file:
 			self.oper_type = 'O'
@@ -432,7 +530,7 @@ class MechOperMconfig(object):
 		_rebound = np.clip(curve[rebound_ix] - angle_open, 0, np.inf)
 		return _rebound, rebound_ix, _overshoot, overshoot_ix
 
-	def plot_all_csv(dir_data:str, curve_type:str):
+	def plot_all_csv(dir_data:str, curve_type:str, **kwargs):
 		"""method that plot all csv curves under dir_data folder; 
 
 		Args:
@@ -443,18 +541,20 @@ class MechOperMconfig(object):
 		Notes:
 
 		"""
+		linew= kwargs.get('linew', 0.5)
 		count_curve = 0
 		for cur_dir, dirs, files in os.walk(dir_data):
-			
+			start = kwargs.get('start_ix', 0)
+			end = kwargs.get('end_ix', len(files) - 1)
 			plt.figure(dpi=200)
-			for file in files:
+			for file in files[start : end]:
 
 				if curve_type in file:
 					count_curve += 1
 					curve_df = pd.read_csv(os.path.join(cur_dir, file), header=0)
 					plt.plot(curve_df['data'],
 							c='g',
-							linewidth=0.5)
+							linewidth=linew)
 
 		plt.title('{} curves, total number: {}'.format(curve_type, count_curve))
 		print('number of {} curves: {}'.format(curve_type, count_curve))    
@@ -533,6 +633,7 @@ class MechOperMconfig(object):
 		title = kwargs.get('title', 'parameter')
 		xlabel = kwargs.get('xlabel', 'test number')
 		ylabel = kwargs.get('ylabel', 'parameter value')
+		y_len = kwargs.get('y_len', 10000)
 
 		fig = plt.figure(title)
 		sns.set(color_codes=True)
@@ -675,6 +776,132 @@ class MechOperMconfig(object):
 				'Poor current quality: signal shape does not meet expectation.'
 			)
 		return start, plateau_start, valley, plateau_end, plateau_rms
+
+	def cal_current_avg(self, curve, **kwargs):
+		"""
+		created based on ACTAS's algorithm
+
+		Given a current curve, calculate its average current from %20 to %80 lasting time
+		@param curve: input current sensor reading, np array of shape (-1), in unit A
+		@return:
+		start_ix: where the current starts to rise
+		end_ix: where the current starts to rise from its backwards
+		current_avg: average current from %20 to %80 lasting time
+
+		"""
+
+		# start point
+		front_percent = kwargs.get('front_percent', 20)
+		back_percent = kwargs.get('back_percent', 80)
+		threshold = kwargs.get('threshold', 0.1)
+		length = kwargs.get('length', 5)
+		invalid_title = kwargs.get('invalid_title', 'cannot find correct start/end index')
+		# curve_filted = curve_smoothing(curve, self.configuration)
+		# plt.plot(curve_filted)
+
+		# curve_dif = np.diff(curve, prepend=[curve[0]])
+		for ix,value in enumerate(curve):
+			if (curve[ix: ix + length] > threshold).all():
+			# if (curve_dif[ix : ix + 5] > threshold).all():
+				start_ix = ix
+				# print('start_ix', start_ix)
+				break
+			elif ix == (len(curve) - 1):
+				# print('cannot find start_ix')
+				start_ix = 0
+			else:
+				pass
+		curve_op = curve[::-1]
+		# curve_op_dif = np.diff(curve_op, prepend=[curve_op[0]])
+		for ix,value in enumerate(curve_op):
+			# if (curve_op_dif[ix : ix + 5] > threshold).all():
+			if (curve_op[ix: ix + length] > threshold).all():
+				end_ix = len(curve) - 1 - ix
+				# print('end_ix', end_ix)
+				break
+			elif ix == (len(curve_op) - 1):
+				# print('cannot find end_ix')
+				end_ix = 0
+			else:
+				pass
+		if start_ix < end_ix:
+			left_ix = start_ix + int((end_ix - start_ix) * front_percent / 100)
+			right_ix = start_ix + int((end_ix - start_ix) * back_percent / 100)
+			# print('left_ix, right_ix : ', left_ix, right_ix)
+			current_avg = np.average(curve[left_ix : right_ix])
+		else:
+			# print('cannot find correct start/end index')
+			left_ix = 0
+			right_ix = 0
+			current_avg = 0
+			plt.figure()
+			plt.plot(curve)
+			plt.title(invalid_title)
+		return start_ix, end_ix, left_ix, right_ix, current_avg
+
+	def cal_motor_para(self, curve, **kwargs):
+		"""
+		created based on ACTAS's algorithm
+
+		Given a motor current curve, calculate its average current from %20 to %80 lasting time
+		@param curve: input current sensor reading, np array of shape (-1), in unit A
+		@return:
+		start_ix: where the current starts to rise
+		end_ix: where the current starts to rise from its backwards
+		current_avg: average current from %20 to %80 lasting time
+		charge_time: current lasting time in seconds
+		"""
+
+		# start point
+		front_percent = kwargs.get('front_percent', 20)
+		back_percent = kwargs.get('back_percent', 80)
+		threshold = kwargs.get('threshold', 0.5)
+		length = kwargs.get('length', 5)
+		invalid_title = kwargs.get('invalid_title', 'cannot find correct start/end index')
+		sample_time = kwargs.get('sample_time', 0.02) # in second
+		# curve_filted = curve_smoothing(curve, self.configuration)
+		# plt.plot(curve_filted)
+		# curve_dif = np.diff(curve, prepend=[curve[0]])
+		for ix,value in enumerate(curve):
+			if (curve[ix: ix + length] > threshold).all():
+			# if (curve_dif[ix : ix + 5] > threshold).all():
+				start_ix = ix
+				# print('start_ix', start_ix)
+				break
+			elif ix == (len(curve) - 1):
+				# print('cannot find start_ix')
+				start_ix = 0
+			else:
+				pass
+		curve_op = curve[::-1]
+		# curve_op_dif = np.diff(curve_op, prepend=[curve_op[0]])
+		for ix,value in enumerate(curve_op):
+			# if (curve_op_dif[ix : ix + 5] > threshold).all():
+			if (curve_op[ix: ix + length] > threshold).all():
+				end_ix = len(curve) - 1 - ix
+				# print('end_ix', end_ix)
+				break
+			elif ix == (len(curve_op) - 1):
+				# print('cannot find end_ix')
+				end_ix = 0
+			else:
+				pass
+		if start_ix < end_ix:
+			left_ix = start_ix + int((end_ix - start_ix) * front_percent / 100)
+			right_ix = start_ix + int((end_ix - start_ix) * back_percent / 100)
+			# print('left_ix, right_ix : ', left_ix, right_ix)
+			current_avg = np.average(curve[left_ix : right_ix])
+			charge_time = (end_ix - start_ix) * sample_time
+		else:
+			# print('cannot find correct start/end index')
+			left_ix = 0
+			right_ix = 0
+			current_avg = 0
+			charge_time = 0
+			# plt.figure()
+			# plt.plot(curve)
+			# plt.title(invalid_title)
+		return start_ix, end_ix, left_ix, right_ix, current_avg, charge_time
 
 	def cal_op_time(self, start):
 		"""

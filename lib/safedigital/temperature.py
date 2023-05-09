@@ -1289,24 +1289,49 @@ class DataClean(object):
                         (raw_data.index[i].strftime("%H:%M:%S")))
                     break
 
+    def read_logger_data_GP(path):
+        """method that read the gas pressure and humidity data
+           sampled by data logger, not to find starting point
+        Args:
+            path                - full path of the data file
+        Return:
+            raw_data_sliced     - raw data cutted from starting index to ending index
+        Notes:
+        """
+        raw_data = pd.read_csv(path, header=0)
+        raw_data = raw_data.dropna()
 
-            # search test end index from 1 hour after test started
-            for i in range(t0 + 360, len(raw_data)):
-                if ((raw_data.iloc[i:i+10, 3:9] == 0).all()).all():
-                    tn = i
-                    print('logger ended at %s' %
-                        (raw_data.index[i].strftime("%H:%M:%S")))
-                    break
-                elif i == (len(raw_data) - 1):
-                    tn = i + 1
-                    print('test data are not fully recorded')
-                else:
-                    continue
+        # convert string data to float
+        output = raw_data.iloc[:, 1:].astype(float)
 
-            # slice data from start to end index
-            output = raw_data.iloc[t0:tn, :]
-            # print(output.columns)
-            return output
+        # convert str to datetime
+        output.index = [datetime.strptime(raw_data.loc[i, 'Time'], '%Y-%m-%d %H:%M:%S') for i in
+                          range(len(raw_data))]
+
+        return output
+
+    def read_logger_data_simple(path):
+        """simple method that only read logger data without finding starting time,
+
+
+        Args:
+            path       - full path of the data file
+        Return:
+            output     - data read into dataframe
+        Notes:
+            updated on 20230406
+        """
+        raw_data = pd.read_csv(path, header=0)
+        raw_data = raw_data.dropna()
+
+        # convert string data to float
+        output = raw_data.iloc[:, 1:].astype(float)
+
+        # convert str to datetime
+        output.index = [datetime.strptime(raw_data.loc[i, 'Time'], '%Y-%m-%d %H:%M:%S') for i in
+                          range(len(raw_data))]
+
+        return output
 
     def read_coupler_data(path):
         """method that read the data from thermalcouples;
@@ -1324,7 +1349,7 @@ class DataClean(object):
         """
         raw_data = pd.read_csv(path,
                                header=25,
-                               na_values=['          ', '     -OVER','   INVALID'])
+                               na_values=['          ', '     -OVER','   INVALID', '     +OVER'])
         # print(raw_data)
         print(raw_data.columns)
         raw_data.iloc[:, 4:].astype(float)
@@ -1351,7 +1376,7 @@ class DataClean(object):
         """
         raw_data = pd.read_csv(path,
                                header=25,
-                               na_values=['          ', '     -OVER','   INVALID'])
+                               na_values=['          ', '     -OVER','   INVALID', '     +OVER'])
 
         
         raw_data.iloc[:, 4:].astype(float)
@@ -1706,7 +1731,7 @@ class DataClean(object):
         return data_out
 
     @staticmethod
-    def datetime_to_xtick( datetime_str):
+    def datetime_to_xtick(datetime_str):
         datetime_dt = datetime.strptime(datetime_str, '%Y-%m-%d %H:%M:%S')
         return datetime_dt.strftime('%H:%M:%S')
 
@@ -1740,6 +1765,41 @@ class DataClean(object):
         return sync_df
         # sync_df.to_csv(path_data_clearn)
 
+    # def interp_zero(data):
+    #     """interpolate the "0" in data array.
+    #
+    #     Args:
+    #     -------
+    #         data - array to be interpolated.
+    #     Return:
+    #     -------
+    #         NA
+    #     Notes:
+    #         Updated on 20230406
+    #     """
+    #     # find the index of zero points
+    #     zero_ix = []
+    #     data_ser = data.copy()
+    #     data_ser =
+    #     for ix,value in enumerate(data_ser):
+    #         if value == 0:
+    #             zero_ix.append(ix)
+    #     print(zero_ix)
+    #
+    #     # drop zero of original series
+    #     data_drop_zero = data_ser.drop(zero_ix)
+    #
+    #     # drop zero of time index
+    #     ix_drop = np.arange(0,len(data_arr)).drop(zero_ix)
+    #
+    #     # do interpolation
+    #     f_raw = interpolate.interp1d(
+    #         ix_drop, data_drop_zero, kind='linear', fill_value='extrapolate')
+    #     for k in zero_ix:
+    #         data_arr[k] = np.around(f_raw(k), 2)
+    #     # data['inter'] = data_arr
+    #     # data_ser = data['inter']
+    #     return data_arr
 # %%
 class TempRiseExperiment_Norway(object):
     """Class of a set of temperature rise experiment in norway lab."""
@@ -2526,6 +2586,7 @@ class DynTempRise(object):
         time_const_drop = kwargs.get('time_const_drop', time_const)
         delay_const = kwargs.get('delay_const', 0)
         title = kwargs.get('title', 'dtr simulation')
+        input_temp_label = kwargs.get('input_temp_label', col_name)
         data_df = data.copy()
         current = data_df[cur_col_name]
         data_df['t_amb_avg'] = (data_df['t_oil_bottle_4'] +
@@ -2609,18 +2670,18 @@ class DynTempRise(object):
         for i in range(len(data_df)):
             if (0 <= data_df.loc[data_df.index[i], col_name] < 
                 data_df.loc[data_df.index[i], 't_warn']):
-                data_df.loc[data_df.index[i], 't_si'] = 1
+                data_df.loc[data_df.index[i], 'si'] = 1
             elif (data_df.loc[data_df.index[i], 't_alarm'] > 
                   data_df.loc[data_df.index[i], col_name] >= 
                   data_df.loc[data_df.index[i], 't_warn']):         
-                data_df.loc[data_df.index[i], 't_si'] = 2
+                data_df.loc[data_df.index[i], 'si'] = 2
 
             elif (data_df.loc[data_df.index[i], col_name] > 
                   data_df.loc[data_df.index[i], 't_alarm']):
-                data_df.loc[data_df.index[i], 't_si'] = 3
+                data_df.loc[data_df.index[i], 'si'] = 3
 
             else:
-                data_df.loc[data_df.index[i], 't_si'] = 0
+                data_df.loc[data_df.index[i], 'si'] = 0
 
         # figure
         fig, ax1 = plt.subplots(1, 1, dpi=200)
@@ -2632,10 +2693,10 @@ class DynTempRise(object):
         #             label='t_rated_scatter')
         plt.plot(data_df['t_rated'],
                 color='c',
-                label='t_rated_plot')
+                label='t_rated')
         plt.plot(data_df[col_name],
                 color='g',
-                label=col_name)
+                label=input_temp_label)
         plt.plot(data_df['t_warn'],
                 color='y',
                 label='t_warn')
@@ -2648,7 +2709,7 @@ class DynTempRise(object):
                 label='current',
                 linestyle=':',
                 color='k')
-
+        plt.grid(b=None)
         plt.title(title)
         ax1.set_ylabel('Temperature (C)')
         ax2.set_ylabel('Time Variant Current (A)')
@@ -2656,3 +2717,4 @@ class DynTempRise(object):
         ax2.legend(fontsize=7)
         ax1.tick_params(labelsize=7)
         ax2.tick_params(labelsize=7)
+        return data_df

@@ -10,18 +10,22 @@ from scipy import interpolate
 
 class GasPresExperiment_CN(object):
 	
+
+
 	def data_clean(cur_dir, test_date, test_id, **kwargs):
 		sample_time = kwargs.get('sample_time', '1min')
 		test_folder = test_date + test_id  # test folder
-		folder_data_raw = cur_dir + '\\' + test_folder + '\\' + '0_Data original'  # raw data folder
+		folder_data_raw = kwargs.get('folder_raw',
+									 cur_dir + '\\' + test_folder + '\\' + '0_Data original')  # raw data folder
 		# folder_data_clean = cur_dir + '\\' + test_folder + '\\' + '1_Data formatted'  # cleaned data folder
 		file_name_sen = test_date[0:4] + '-' + test_date[4:6] + '-' + test_date[6:8] + '_TP.csv'  # sensor data file name
 		file_name_coup1 = test_date[0:4] + '-' + test_date[4:6] + '-' + test_date[6:8] + '_TC1.csv'  # thermal couples data file name
 		path_sensor = folder_data_raw + '\\' + file_name_sen  # file location of sensor data
 		path_coup1 = folder_data_raw + '\\' + file_name_coup1  # file location of coupler data
-		path_config = cur_dir + '\\' + test_folder + '\\' + '1_Data formatted' + '\\' + test_date + '_config.json'
+		path_config = kwargs.get('path_config',
+								 cur_dir + '\\' + test_folder + '\\' + '1_Data formatted' + '\\' + test_date + '_config.json')
 		# path_data_clearn = folder_data_clean + '\\' + '%s_data_clean_1min.csv' % (test_date)
-		raw_sen = TR.DataClean.read_logger_data_DTR_PD(path_sensor)  # read MDC4-M data
+		raw_sen = TR.DataClean.read_logger_data_GP(path_sensor)  # read MDC4-M data
 		raw_coup1 = TR.DataClean.read_couple_datetime(path_coup1)  # read thermal couples data
 		sync_df = TR.DataClean.synch_logger_couple_resample(raw_sen, raw_coup1, sample_time)  # synchronize two data sets
 		# print(sync_df.index)
@@ -33,7 +37,7 @@ class GasPresExperiment_CN(object):
 		print(sync_df.columns)
 		return sync_df
 		# sync_df.to_csv(path_data_clearn)
-	
+
 	def interp_data_nan(data_df, col_name):
         # find the index of zero points
 		data_raw = data_df.copy()
@@ -105,6 +109,48 @@ class GasPresExperiment_CN(object):
 			es = 0
 		
 		return es
+
+	def plot_p20_compare(p1_arr,p2_arr, **prop):
+		x_tick_idx = prop.get('x_tick_idx',[])
+		x_tick_str = prop.get('x_tick_str',[])
+		p1_label = prop.get('p1_label', 'P1')
+		p2_label = prop.get('p2_label', 'P2')
+		err_label = prop.get('error_label', 'error between P1 and P2')
+		sigma = round((np.mean((p1_arr - p2_arr) ** 2)) ** 0.5,3)
+		max_abs = round(max(np.abs(p1_arr - p2_arr)),3)
+		title = prop.get('title','P20 comparison')
+		plt.figure(dpi=300, figsize=(10,3))
+		ax1 = plt.gca()
+		ax1.plot(p1_arr,
+				 color='r',
+				 linewidth=1,
+				 label=p1_label
+				)
+
+		ax1.plot(p2_arr,
+				 color ='g',
+				 linewidth=1,
+				 label=p2_label
+				)
+
+		plt.xticks(x_tick_idx,
+				   x_tick_str,
+				   fontsize=5,
+				   rotation=60)
+		plt.ylabel('p20 in bar')
+		ax2 = ax1.twinx()
+		ax2.plot(p2_arr - p1_arr,
+				 label='error with sigma={} max_abs={}'.format(sigma,max_abs),
+				 color='k',
+				 linewidth=0.5
+				)
+		plt.xlabel('time')
+		plt.ylabel('p20 in bar')
+		plt.title(title)
+		plt.grid()
+		ax1.legend(loc="upper left",fontsize=6)
+		ax2.legend(loc="upper right",fontsize=6)
+		return sigma,max_abs
 
 class GasPresExperiment_IN(object):
 
