@@ -241,7 +241,6 @@ class DataClean():
 			for wave_class in wave_class_dict.keys():
 				if wave_class in files:            
 					wave_path = os.path.join(cur_dir, wave_class)
-					# print(travel_path)
 					travel_path_list.append(wave_path)
 					with open(wave_path, "r", encoding='utf-8') as f: 
 						data = f.read()
@@ -272,7 +271,7 @@ class DataClean():
 						pass
 			else:
 				pass
-		print(travel_path_list)
+		# print(travel_path_list)
 
 	def txt_to_csv(dir_raw, dir_washed):
 		"""method that re-orgnize the waveform files of
