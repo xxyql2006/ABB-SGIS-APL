@@ -330,6 +330,53 @@ class DataClean():
 			else:
 				pass
 			print(travel_path_list)
+	
+	def curve_preview(dir_curve, curve_type_str, **kwargs):
+		"""method that all curves of specified type;
+
+		Args:
+			dir_curve  - folder of curve files
+			curve_type_str - for example, 'travel_close', 'travel_open',
+							'current_close', 'current_open','current_motor';
+
+		Return:
+			
+
+		Notes:
+
+		"""
+		up_thr = kwargs.get('up_thr', 1e6)
+		low_thr = kwargs.get('low_thr', -1e6)
+		avg_max = kwargs.get('avg_max', 1e6)
+		avg_min = kwargs.get('avg_min', -1e6)
+		date_str = kwargs.get('date_str', '')
+		print_invalid = kwargs.get('print_invalid', False)
+		count_curve, count_valid = 0, 0
+		for cur_dir, dirs, files in os.walk(dir_curve):
+			# plot curve
+			plt.figure(dpi=200)
+			ax = plt.gca()
+			# for all specified curves
+			for file in files:
+				if (curve_type_str in file) and (date_str in file):
+					count_curve += 1
+					curve_df = pd.read_csv(os.path.join(cur_dir, file), header=0)
+					min_curve = min(curve_df['data'])
+					max_curve = max(curve_df['data'])
+					avg = np.average(curve_df['data'])
+					if (low_thr <= min_curve) and (up_thr >= max_curve) and (avg_min <= avg <= avg_max):
+						count_valid += 1
+						ax.plot(curve_df['data'],
+								c='g',
+								linewidth=0.5)
+					elif print_invalid:
+						plt.figure()
+						plt.plot(curve_df['data'],
+	       						c='r')
+						plt.title('{} is invalid'.format(file))
+					else:
+						print(file, ' is invalid with min,max of ({},{})'.format(min_curve, max_curve))
+		ax.set_title('{} curves has valid number {}//{}'.format(curve_type_str, count_valid, count_curve))
 
 
 class MechOperMconfig(object): 
@@ -406,7 +453,7 @@ class MechOperMconfig(object):
 		close_break_angle = kwargs.get('close_break_angle', 11) #degree
 		open_t1_tb_ratio = kwargs.get('open_t1_tb_per', 0.15) # ratio
 		open_t2_tb_ratio = kwargs.get('open_t2_t1_ratio', 0.75) # ratio
-		close_t2_tb_ratio = kwargs.get('open_t1_tb_per', 0.15) # ratio 
+		close_t2_tb_ratio = kwargs.get('open_t1_tb_per', 0.3) # ratio 
  
 		if self.oper_type == 'O':
 			self.break_deg = angle_close - open_break_angle
