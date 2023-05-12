@@ -349,6 +349,8 @@ class DataClean():
 		low_thr = kwargs.get('low_thr', -1e6)
 		avg_max = kwargs.get('avg_max', 1e6)
 		avg_min = kwargs.get('avg_min', -1e6)
+		head_up_thr = kwargs.get('head_up_thr', 1e6)
+		tail_up_thr = kwargs.get('tail_up_thr', 1e6)
 		date_str = kwargs.get('date_str', '')
 		print_invalid = kwargs.get('print_invalid', False)
 		count_curve, count_valid = 0, 0
@@ -364,7 +366,13 @@ class DataClean():
 					min_curve = min(curve_df['data'])
 					max_curve = max(curve_df['data'])
 					avg = np.average(curve_df['data'])
-					if (low_thr <= min_curve) and (up_thr >= max_curve) and (avg_min <= avg <= avg_max):
+					head = np.average(curve_df.loc[curve_df.index[0:20],'data'])
+					tail = np.average(curve_df.loc[curve_df.index[-20:],'data'])
+					if ((low_thr <= min_curve) and 
+						(up_thr >= max_curve) and 
+						(avg_min <= avg <= avg_max) and 
+						(head <= head_up_thr) and
+						(tail <= tail_up_thr)):
 						count_valid += 1
 						ax.plot(curve_df['data'],
 								c='g',
@@ -377,7 +385,7 @@ class DataClean():
 					else:
 						print(file, ' is invalid with min,max of ({},{})'.format(min_curve, max_curve))
 		ax.set_title('{} curves has valid number {}//{}'.format(curve_type_str, count_valid, count_curve))
-
+	
 
 class MechOperMconfig(object): 
 	# """Class of a single mechanical operation recorded by Mconfig 1.5.0"""
