@@ -1,0 +1,2117 @@
+{
+  "DocString":
+          "Parameter config file for mechanical and motor diagnosis",
+  
+  "deduction":
+    {
+      "travel": 20,
+      "open_spd": 10,
+      "close_spd": 10,
+      "open_time": 10,
+      "close_time": 10,
+      "coil_current": 10,
+      "charging_current": 10,
+      "charging_time": 10,
+      "rebound": 0,
+      "open_overshoot": 0,
+      "close_overshoot": 0
+    },
+
+  "deduction_zero":
+    {
+      "travel": 0,
+      "open_spd": 0,
+      "close_spd": 0,
+      "open_time": 0,
+      "close_time": 0,
+      "coil_current": 0,
+      "charging_current": 0,
+      "charging_time": 0,
+      "rebound": 0,
+      "open_overshoot": 0,
+      "close_overshoot": 0
+    },
+  
+  "fault": 
+    {
+      "travel": 1,
+      "open_spd": 2,
+      "close_spd": 2,
+      "open_time": 3,
+      "close_time": 3,
+      "coil_current": 4,
+      "charging_current": 5,
+      "charging_time": 6,
+      "rebound": 7,
+      "open_overshoot": 8,
+      "close_overshoot": 8
+    },
+
+  "SafeRing 12kV":
+    {
+      "C":
+        {
+          "travel": {
+            "base": 82.1,
+            "span": 15,
+            "hard_range": [50, 150],
+            "warn_percent": [10, 10],
+            "alarm_percent": [70, 30]
+          },
+          "open_spd": {
+            "base": 4.8,
+            "span": 3.2,
+            "hard_range": [2, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [70, 30]
+          },
+          "close_spd": {
+            "base": 6,
+            "span": 4.3,
+            "hard_range": [2, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [70, 30]
+          },
+          "rebound": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "open_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "close_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "charging_time": {
+            "220": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "charging_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 1.6,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 3.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 4.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 6.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 8.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          }
+        },
+      "V":
+        {
+          "travel": {
+            "base": 85,
+            "span": 15,
+            "hard_range": [50, 100],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "open_spd": {
+            "base": 6,
+            "span": 2.8,
+            "hard_range": [2, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [20, 80]
+          },
+          "close_spd": {
+            "base": 5,
+            "span": 2,
+            "hard_range": [2, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "rebound": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "open_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "close_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "open_time": {
+            "base": 35,
+            "span": 20,
+            "hard_range": [20, 100],
+            "warn_percent": [10, 10],
+            "alarm_percent": [20, 80]
+          },
+          "close_time": {
+            "base": 38,
+            "span": 20,
+            "hard_range": [20, 100],
+            "warn_percent": [10, 10],
+            "alarm_percent": [30, 70]
+          },
+          "open_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 0.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 1.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 2.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 3.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 4.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+        },
+          "close_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 0.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 1.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 2.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 3.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 4.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+        },
+          "charging_time": {
+            "220": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "charging_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 1.6,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 3.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 4.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 6.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 8.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          }
+        },
+      "F":
+        {
+          "travel": {
+            "base": 85,
+            "span": 15,
+            "hard_range": [50, 100],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "open_spd": {
+            "base": 6,
+            "span": 2.8,
+            "hard_range": [2, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [20, 80]
+          },
+          "close_spd": {
+            "base": 5,
+            "span": 2,
+            "hard_range": [2, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "rebound": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "open_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "close_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "open_time": {
+            "base": 35,
+            "span": 20,
+            "hard_range": [20, 100],
+            "warn_percent": [10, 10],
+            "alarm_percent": [20, 80]
+          },
+          "close_time": {
+            "base": 38,
+            "span": 20,
+            "hard_range": [20, 100],
+            "warn_percent": [10, 10],
+            "alarm_percent": [30, 70]
+          },
+          "open_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 0.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 1.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 2.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 3.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 4.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "close_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 0.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 1.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 2.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 3.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 4.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "charging_time": {
+            "220": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "charging_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 1.6,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 3.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 4.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 6.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 8.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          }
+        },
+      "V20":
+        {
+          "travel": {
+            "base": 65,
+            "span": 20,
+            "hard_range": [50, 110],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "open_spd": {
+            "base": 4.3,
+            "span": 4,
+            "hard_range": [2, 15],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "close_spd": {
+            "base": 3.6,
+            "span": 4,
+            "hard_range": [2, 15],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "rebound": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "open_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "close_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "open_time": {
+            "base": 35,
+            "span": 20,
+            "hard_range": [20, 100],
+            "warn_percent": [10, 10],
+            "alarm_percent": [20, 80]
+          },
+          "close_time": {
+            "base": 38,
+            "span": 20,
+            "hard_range": [20, 100],
+            "warn_percent": [10, 10],
+            "alarm_percent": [30, 70]
+          },
+          "open_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 0.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 1.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 2.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 3.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 4.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "close_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 0.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 1.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 2.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 3.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 4.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "charging_time": {
+            "220": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "charging_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 1.6,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 3.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 4.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 6.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 8.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          }
+        },
+      "V25":
+        {
+          "travel": {
+            "base": 65,
+            "span": 20,
+            "hard_range": [50, 110],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "open_spd": {
+            "base": 4.3,
+            "span": 4,
+            "hard_range": [2, 15],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "close_spd": {
+            "base": 3.6,
+            "span": 4,
+            "hard_range": [2, 15],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "rebound": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "open_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "close_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "open_time": {
+            "base": 35,
+            "span": 20,
+            "hard_range": [20, 100],
+            "warn_percent": [10, 10],
+            "alarm_percent": [20, 80]
+          },
+          "close_time": {
+            "base": 38,
+            "span": 20,
+            "hard_range": [20, 100],
+            "warn_percent": [10, 10],
+            "alarm_percent": [30, 70]
+          },
+          "open_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 0.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 1.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 2.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 3.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 4.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "close_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 0.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 1.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 2.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 3.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 4.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "charging_time": {
+            "220": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "charging_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 1.6,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 3.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 4.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 6.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 8.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          }
+        }
+    },
+
+  "SafeRing 24kV":
+    {
+      "C":
+        {
+          "travel": {
+            "base": 82.1,
+            "span": 15,
+            "hard_range": [50, 150],
+            "warn_percent": [10, 10],
+            "alarm_percent": [70, 30]
+          },
+          "open_spd": {
+            "base": 4.8,
+            "span": 3.2,
+            "hard_range": [2, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [70, 30]
+          },
+          "close_spd": {
+            "base": 6,
+            "span": 4.3,
+            "hard_range": [2, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [70, 30]
+          },
+          "rebound": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "open_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "close_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "charging_time": {
+            "220": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "charging_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 1.6,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 3.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 4.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 6.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 8.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          }
+        },
+      "V":
+        {
+          "travel": {
+            "base": 85,
+            "span": 15,
+            "hard_range": [50, 100],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "open_spd": {
+            "base": 6,
+            "span": 2.8,
+            "hard_range": [2, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [20, 80]
+          },
+          "close_spd": {
+            "base": 5,
+            "span": 2,
+            "hard_range": [2, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "rebound": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "open_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "close_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "open_time": {
+            "base": 35,
+            "span": 20,
+            "hard_range": [2, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [20, 80]
+          },
+          "close_time": {
+            "base": 38,
+            "span": 20,
+            "hard_range": [2, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [30, 70]
+          },
+          "open_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 0.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 1.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 2.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 3.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 4.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+        },
+          "close_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 0.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 1.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 2.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 3.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 4.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+        },
+          "charging_time": {
+            "220": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "charging_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 1.6,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 3.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 4.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 6.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 8.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          }
+        },
+      "F":
+        {
+          "travel": {
+            "base": 85,
+            "span": 15,
+            "hard_range": [50, 100],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "open_spd": {
+            "base": 6,
+            "span": 2.8,
+            "hard_range": [2, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [20, 80]
+          },
+          "close_spd": {
+            "base": 5,
+            "span": 2,
+            "hard_range": [2, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "rebound": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "open_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "close_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "open_time": {
+            "base": 35,
+            "span": 20,
+            "hard_range": [20, 100],
+            "warn_percent": [10, 10],
+            "alarm_percent": [20, 80]
+          },
+          "close_time": {
+            "base": 38,
+            "span": 20,
+            "hard_range": [20, 100],
+            "warn_percent": [10, 10],
+            "alarm_percent": [30, 70]
+          },
+          "open_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 0.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 1.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 2.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 3.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 4.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "close_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 0.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 1.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 2.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 3.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 4.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "charging_time": {
+            "220": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "charging_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 1.6,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 3.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 4.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 6.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 8.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          }
+        }
+    },
+
+  "SafeAir 12kV":
+    {
+      "C":
+        {
+          "travel": {
+            "base": 85,
+            "span": 20,
+            "hard_range": [60, 110],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "open_spd": {
+            "base": 8.5,
+            "span": 6,
+            "hard_range": [2, 15],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "close_spd": {
+            "base": 5.2,
+            "span": 5,
+            "hard_range": [2, 15],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "rebound": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "open_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "close_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "charging_time": {
+            "220": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "charging_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 1.6,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 3.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 4.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 6.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 8.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          }
+        },
+      "V":
+        {
+          "travel": {
+            "base": 85,
+            "span": 15,
+            "hard_range": [50, 100],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "open_spd": {
+            "base": 6,
+            "span": 2.8,
+            "hard_range": [2, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [20, 80]
+          },
+          "close_spd": {
+            "base": 5,
+            "span": 2,
+            "hard_range": [2, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "rebound": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "open_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "close_overshoot": {
+            "base": 0,
+            "span": 65535,
+            "hard_range": [0, 65535],
+            "warn_percent": [0, 0],
+            "alarm_percent": [0, 100]
+          },
+          "open_time": {
+            "base": 35,
+            "span": 20,
+            "hard_range": [2, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [20, 80]
+          },
+          "close_time": {
+            "base": 38,
+            "span": 20,
+            "hard_range": [2, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [30, 70]
+          },
+          "open_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 0.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 1.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 2.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 3.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 4.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+        },
+          "close_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 0.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 1.8,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 2.4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 3.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 4.2,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+        },
+          "charging_time": {
+            "220": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 10,
+              "span": 10,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "charging_current": {
+            "220": {
+              "base": 0.7,
+              "span": 0.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 1.4,
+              "span": 1.6,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 3,
+              "span": 3.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.7,
+              "span": 4.8,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 5.4,
+              "span": 6.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 7.1,
+              "span": 8.4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          }
+        }
+    },
+
+  "SafeAir SGCC":
+    {
+      "V":
+        {
+          "travel": {
+            "base": 47.3,
+            "span": 5,
+            "hard_range": [0, 100],
+            "warn_percent": [10, 10],
+            "alarm_percent": [40, 60]
+          },
+          "open_spd": {
+            "base": 2.4,
+            "span": 5,
+            "hard_range": [0, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [50, 50]
+          },
+          "close_spd": {
+            "base": 5.2,
+            "span": 4,
+            "hard_range": [0, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [60, 40]
+          },
+          "rebound": {
+            "base": 3.1,
+            "span": 7,
+            "hard_range": [0, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [70, 30]
+          },
+          "open_overshoot": {
+            "base": 0,
+            "span": 2,
+            "hard_range": [0, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [20, 80]
+          },
+          "close_overshoot": {
+            "base": 3.9,
+            "span": 3,
+            "hard_range": [0, 10],
+            "warn_percent": [10, 10],
+            "alarm_percent": [70, 30]
+          },
+          "open_time": {
+            "base": 23.5,
+            "span": 33,
+            "hard_range": [0, 100],
+            "warn_percent": [10, 10],
+            "alarm_percent": [20, 80]
+          },
+          "close_time": {
+            "base": 33.4,
+            "span": 12,
+            "hard_range": [0, 100],
+            "warn_percent": [10, 10],
+            "alarm_percent": [60, 40]
+          },
+          "open_current": {
+            "220": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.4,
+              "span": 4,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [80, 20]},
+            "30": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "close_current": {
+            "220": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 3.5,
+              "span": 3,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [80, 20]},
+            "30": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "charging_time": {
+            "220": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 5.9,
+              "span": 4,
+              "hard_range": [0, 20],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "30": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          },
+          "charging_current": {
+            "220": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "110": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "60": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "48": {
+              "base": 2.2,
+              "span": 1,
+              "hard_range": [0, 10],
+              "warn_percent": [10, 10],
+              "alarm_percent": [80, 20]},
+            "30": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]},
+            "24": {
+              "base": 0,
+              "span": 65535,
+              "hard_range": [0, 65535],
+              "warn_percent": [10, 10],
+              "alarm_percent": [50, 50]}
+          }
+        }
+    }
+
+}
