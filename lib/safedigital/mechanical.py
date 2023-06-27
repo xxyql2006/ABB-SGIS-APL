@@ -345,6 +345,7 @@ class DataClean():
 		Notes:
 
 		"""
+		data_col_str = kwargs.get('data_col_str', 'Data')
 		up_thr = kwargs.get('up_thr', 1e6)
 		low_thr = kwargs.get('low_thr', -1e6)
 		avg_max = kwargs.get('avg_max', 1e6)
@@ -353,38 +354,46 @@ class DataClean():
 		tail_up_thr = kwargs.get('tail_up_thr', 1e6)
 		date_str = kwargs.get('date_str', '')
 		print_invalid = kwargs.get('print_invalid', False)
+		num_curve = kwargs.get('num_curve', 1e6)
 		count_curve, count_valid = 0, 0
+		cur_val_list = []
 		for cur_dir, dirs, files in os.walk(dir_curve):
 			# plot curve
 			plt.figure(dpi=200)
 			ax = plt.gca()
 			# for all specified curves
 			for file in files:
-				if (curve_type_str in file) and (date_str in file):
+
+				if ((curve_type_str in file) 
+					and (date_str in file) 
+					and (count_curve < num_curve)):
 					count_curve += 1
 					curve_df = pd.read_csv(os.path.join(cur_dir, file), header=0)
-					min_curve = min(curve_df['data'])
-					max_curve = max(curve_df['data'])
-					avg = np.average(curve_df['data'])
-					head = np.average(curve_df.loc[curve_df.index[0:20],'data'])
-					tail = np.average(curve_df.loc[curve_df.index[-20:],'data'])
+					min_curve = min(curve_df[data_col_str])
+					max_curve = max(curve_df[data_col_str])
+					avg = np.average(curve_df[data_col_str])
+					head = np.average(curve_df.loc[curve_df.index[0:20],data_col_str])
+					tail = np.average(curve_df.loc[curve_df.index[-20:],data_col_str])
 					if ((low_thr <= min_curve) and 
 						(up_thr >= max_curve) and 
 						(avg_min <= avg <= avg_max) and 
 						(head <= head_up_thr) and
 						(tail <= tail_up_thr)):
 						count_valid += 1
-						ax.plot(curve_df['data'],
+						ax.plot(curve_df[data_col_str],
 								c='g',
 								linewidth=0.5)
+						cur_val_list.append(file)
 					elif print_invalid:
 						plt.figure()
-						plt.plot(curve_df['data'],
+						plt.plot(curve_df[data_col_str],
 	       						c='r')
 						plt.title('{} is invalid'.format(file))
 					else:
-						print(file, ' is invalid with min,max of ({},{})'.format(min_curve, max_curve))
-		ax.set_title('{} curves has valid number {}//{}'.format(curve_type_str, count_valid, count_curve))
+						pass
+						# print(file, ' is invalid with min,max of ({},{})'.format(min_curve, max_curve))
+		ax.set_title('{} curves has valid number {}/{}'.format(curve_type_str, count_valid, count_curve))
+		return cur_val_list
 	
 
 class MechOperMconfig(object): 
@@ -394,7 +403,7 @@ class MechOperMconfig(object):
 		with open(config_path, 'r') as fh:
 			self.configuration = json.load(fh)
 		self.angle_df = pd.read_csv(os.path.join(cur_dir, file), header=0)
-		self.angle_arr = np.array(self.angle_df['data'])
+		self.angle_arr = np.array(self.angle_df[self.angle_df.columns[1]])
 		self.break_deg = 0
 		self.time_step = 0.4 # mili second
 		self.file_name = file
@@ -687,7 +696,7 @@ class MechOperMconfig(object):
 		title = kwargs.get('title', 'parameter')
 		xlabel = kwargs.get('xlabel', 'test number')
 		ylabel = kwargs.get('ylabel', 'parameter value')
-		y_len = kwargs.get('y_len', 10000)
+		# y_len = kwargs.get('y_len', 10000)
 
 		fig = plt.figure(title)
 		sns.set(color_codes=True)
@@ -699,9 +708,9 @@ class MechOperMconfig(object):
 		plt.plot([-100, 10000], [np.nanmax(data), np.nanmax(data)], '--r')
 		plt.plot([-100, 10000], [np.nanmean(data), np.nanmean(data)], '--k')
 		plt.plot([-100, 10000], [np.nanmin(data), np.nanmin(data)], '--b')
-		plt.text(100, np.nanmax(data) + 0.1, '{:.2f}'.format(np.nanmax(data)), color='r', weight='bold')
-		plt.text(100, np.nanmean(data) + 0.1, '{:.2f}'.format(np.nanmean(data)), color='k', weight='bold')
-		plt.text(100, np.nanmin(data) + 0.1, '{:.2f}'.format(np.nanmin(data)), color='b', weight='bold')
+		plt.text(100, np.nanmax(data), '{:.2f}'.format(np.nanmax(data)), color='r', weight='bold')
+		plt.text(100, np.nanmean(data), '{:.2f}'.format(np.nanmean(data)), color='k', weight='bold')
+		plt.text(100, np.nanmin(data), '{:.2f}'.format(np.nanmin(data)), color='b', weight='bold')
 		axs21.set(title=title, xlabel=xlabel, ylabel=ylabel)
 
 		axs22 = plt.subplot(gs2[1])
@@ -893,6 +902,64 @@ class MechOperMconfig(object):
 			plt.title(invalid_title)
 		return start_ix, end_ix, left_ix, right_ix, current_avg
 
+	def cal_cur_avg_noself(curve, **kwargs):
+		"""
+		same as cal_current_avg, just no object is needed
+
+		Given a current curve, calculate its average current from %20 to %80 lasting time
+		@param curve: input current sensor reading, np array of shape (-1), in unit A
+		@return:
+		start_ix: where the current starts to rise
+		end_ix: where the current starts to rise from its backwards
+		current_avg: average current from %20 to %80 lasting time
+
+		"""
+
+		# start point
+		front_percent = kwargs.get('front_percent', 20)
+		back_percent = kwargs.get('back_percent', 80)
+		threshold = kwargs.get('threshold', 0.1)
+		length = kwargs.get('length', 5)
+		invalid_title = kwargs.get('invalid_title', 'cannot find correct start/end index')
+		for ix, _ in enumerate(curve):
+			if (curve[ix: ix + length] > threshold).all():
+			# if (curve_dif[ix : ix + 5] > threshold).all():
+				start_ix = ix
+				# print('start_ix', start_ix)
+				break
+			elif ix == (len(curve) - 1):
+				# print('cannot find start_ix')
+				start_ix = 0
+			else:
+				pass
+		curve_op = curve[::-1]
+		# curve_op_dif = np.diff(curve_op, prepend=[curve_op[0]])
+		for ix, _ in enumerate(curve_op):
+			# if (curve_op_dif[ix : ix + 5] > threshold).all():
+			if (curve_op[ix: ix + length] > threshold).all():
+				end_ix = len(curve) - 1 - ix
+				# print('end_ix', end_ix)
+				break
+			elif ix == (len(curve_op) - 1):
+				# print('cannot find end_ix')
+				end_ix = 0
+			else:
+				pass
+		if start_ix < end_ix:
+			left_ix = start_ix + int((end_ix - start_ix) * front_percent / 100)
+			right_ix = start_ix + int((end_ix - start_ix) * back_percent / 100)
+			# print('left_ix, right_ix : ', left_ix, right_ix)
+			current_avg = np.average(curve[left_ix : right_ix])
+		else:
+			# print('cannot find correct start/end index')
+			left_ix = 0
+			right_ix = 0
+			current_avg = 0
+			plt.figure()
+			plt.plot(curve)
+			plt.title(invalid_title)
+		return start_ix, end_ix, left_ix, right_ix, current_avg
+
 	def cal_motor_para(self, curve, **kwargs):
 		"""
 		created based on ACTAS's algorithm
@@ -956,7 +1023,68 @@ class MechOperMconfig(object):
 			# plt.plot(curve)
 			# plt.title(invalid_title)
 		return start_ix, end_ix, left_ix, right_ix, current_avg, charge_time
+	
+	def cal_motor_para_noself(curve, **kwargs):
+		"""
+		same as cal_motor_para, just no object is not needed
 
+		Given a motor current curve, calculate its average current from %20 to %80 lasting time
+		@param curve: input current sensor reading, np array of shape (-1), in unit A
+		@return:
+		start_ix: where the current starts to rise
+		end_ix: where the current starts to rise from its backwards
+		current_avg: average current from %20 to %80 lasting time
+		charge_time: current lasting time in seconds
+		"""
+
+		# start point
+		front_percent = kwargs.get('front_percent', 20)
+		back_percent = kwargs.get('back_percent', 80)
+		threshold = kwargs.get('threshold', 0.5)
+		length = kwargs.get('length', 5)
+		invalid_title = kwargs.get('invalid_title', 'cannot find correct start/end index')
+		sample_time = kwargs.get('sample_time', 0.02) # in second
+		# curve_filted = curve_smoothing(curve, self.configuration)
+		# plt.plot(curve_filted)
+		# curve_dif = np.diff(curve, prepend=[curve[0]])
+		for ix,value in enumerate(curve):
+			if (curve[ix: ix + length] > threshold).all():
+			# if (curve_dif[ix : ix + 5] > threshold).all():
+				start_ix = ix
+				# print('start_ix', start_ix)
+				break
+			elif ix == (len(curve) - 1):
+				# print('cannot find start_ix')
+				start_ix = 0
+			else:
+				pass
+		curve_op = curve[::-1]
+		# curve_op_dif = np.diff(curve_op, prepend=[curve_op[0]])
+		for ix,value in enumerate(curve_op):
+			# if (curve_op_dif[ix : ix + 5] > threshold).all():
+			if (curve_op[ix: ix + length] > threshold).all():
+				end_ix = len(curve) - 1 - ix
+				# print('end_ix', end_ix)
+				break
+			elif ix == (len(curve_op) - 1):
+				# print('cannot find end_ix')
+				end_ix = 0
+			else:
+				pass
+		if start_ix < end_ix:
+			left_ix = start_ix + int((end_ix - start_ix) * front_percent / 100)
+			right_ix = start_ix + int((end_ix - start_ix) * back_percent / 100)
+			# print('left_ix, right_ix : ', left_ix, right_ix)
+			current_avg = np.average(curve[left_ix : right_ix])
+			charge_time = (end_ix - start_ix) * sample_time
+		else:
+			left_ix = 0
+			right_ix = 0
+			current_avg = 0
+			charge_time = 0
+			
+		return start_ix, end_ix, left_ix, right_ix, current_avg, charge_time
+	
 	def cal_op_time(self, start):
 		"""
 		calculate the operation time
