@@ -1259,35 +1259,38 @@ class DataClean(object):
  
         return raw_data_sliced
     
-    def read_logger_data_DTR_PD(path):
-            """method that read the data sampled by TR,GP,DTR,PD data logger,
-            Args:
-                path                - full path of the data file
-            Return:
-                raw_data_sliced     - raw data cutted from starting index to ending index
-            Notes:
-            """
-            raw_data = pd.read_csv(path, header=0)
-            raw_data = raw_data.dropna()
+    def read_logger_data_DTR_PD(path, **kwargs):
+        """method that read the data sampled by TR,GP,DTR,PD data logger,
+        Args:
+            path                - full path of the data file
+        Return:
+            raw_data_sliced     - raw data cutted from starting index to ending index
+        Notes:
+        """
+        start_ix = 0
+        raw_data = pd.read_csv(path, header=0)
+        raw_data.iloc[:, 1:].astype(float)
+        raw_data = raw_data.fillna(0)
 
-            # convert string data to float
-            raw_data.iloc[:, 1 :].astype(float)
+        format = kwargs.get('format', '%Y-%m-%d %H:%M:%S')
             
-            # convert str to datetime
-            raw_data.index = [datetime.strptime(raw_data.loc[i, 'Time'], '%Y-%m-%d %H:%M:%S') for i in range(len(raw_data))]
-    
-            # search test start index
-            for i in range(len(raw_data)):
-                if (raw_data.iloc[i, 3:9] == 0).all():
-                    if i == (len(raw_data) - 1):
-                        print('test data was all "0"')
-                    else:
-                        pass
+        # convert str to datetime
+        raw_data.index = [datetime.strptime(raw_data.loc[i, 'Time'], format) for i in range(len(raw_data))]
+        # print(raw_data)
+        # search test start index
+        for i in range(len(raw_data)):
+            if (raw_data.iloc[i, 3:9] == 0).all():
+                if i == (len(raw_data) - 1):
+                    print('test data was all "0"')
                 else:
-                    t0 = i
-                    print('logger started from %s' %
-                        (raw_data.index[i].strftime("%H:%M:%S")))
-                    break
+                    pass
+            else:
+                print('logger started from %s' %
+                    (raw_data.index[i].strftime("%H:%M:%S")))
+                start_ix = i
+                break
+        data_cut = raw_data.iloc[i:,:]
+        return data_cut
 
     def read_logger_data_GP(path):
         """method that read the gas pressure and humidity data
@@ -1386,7 +1389,7 @@ class DataClean(object):
         # print(raw_data.columns)
         return raw_data
 
-    def read_couple_flex_format(path, format):
+    def read_couple_flex_format(path, **kwargs):
         """method that read the data from thermal couples with index of datetime 
            in a flexible datetime format;
 
@@ -1401,6 +1404,7 @@ class DataClean(object):
 
 
         """
+        format = kwargs.get('format', '%m/%d/%Y:%H:%M:%S')
         raw_data = pd.read_csv(path,
                                header=25,
                                na_values=['          ', '     -OVER','   INVALID'])
@@ -1765,6 +1769,40 @@ class DataClean(object):
         return sync_df
         # sync_df.to_csv(path_data_clearn)
 
+    def sync_by_resample(cur_dir_raw, file_name_log, file_name_couple, file_name_json, **kwargs):
+        """method that synchronize the data files MDC4-M and thermal couples;
+
+		Args:
+			cur          - directory of data files
+
+		Return:
+			
+
+		Notes:
+
+		"""
+        sample_time = kwargs.get('sample_time', '1min') # get sample_time data
+        format_couple = kwargs.get('format_couple', '%m/%d/%Y:%H:%M:%S') # get datetime format
+        format_log = kwargs.get('format_log', '%Y-%m-%d %H:%M:%S') # get datetime format
+
+        path_log = cur_dir_raw + '\\' + file_name_log  # sensor data file path
+        path_couple = cur_dir_raw + '\\' + file_name_couple  # thermal couple data file path
+        path_config = cur_dir_raw + '\\' + file_name_json # json file file pass
+        raw_log = DataClean.read_logger_data_DTR_PD(path_log, 
+                                                    format=format_log)  # read MDC4-M data
+        raw_couple = DataClean.read_couple_flex_format(path_couple, 
+                                                       format=format_couple)  # read thermal couples data
+        sync_df = DataClean.synch_logger_couple_resample(raw_log, raw_couple, sample_time)  # synchronize two data sets
+        # print(sync_df.index)
+        # print(sync_df.columns)
+        # rename columns based on .json config file
+        with open(path_config, 'r') as f:
+            config = json.load(f)
+        sync_df = sync_df.rename(columns=config)
+        print(sync_df.columns)
+        return sync_df
+        # sync_df.to_csv(path_data_clearn)
+        
     # def interp_zero(data):
     #     """interpolate the "0" in data array.
     #
@@ -2480,7 +2518,7 @@ class DynTempRise(object):
                 data       - data in dataframe
             Return:
             -------
-                NA
+                const      - time constant in minutes
             Notes:
             -------
                 NA
@@ -2590,9 +2628,9 @@ class DynTempRise(object):
         data_df = data.copy()
         current = data_df[cur_col_name]
         data_df['t_amb_avg'] = (data_df['t_oil_bottle_4'] +
-						data_df['t_oil_bottle_3'] +
-						data_df['t_oil_bottle_2'] +
-						data_df['t_oil_bottle_1'] * 4) / 4  
+                                data_df['t_oil_bottle_3'] +
+                                data_df['t_oil_bottle_2'] +
+                                data_df['t_oil_bottle_1'] * 4) / 4  
         data_df['tw_rated'] = (current / 630) ** conver_const * tr_rated + data_df['t_amb_avg']
                             
         data_df['tw_warn'] = (current / 630) ** conver_const * tr_warn + data_df['t_amb_avg']
@@ -2713,8 +2751,10 @@ class DynTempRise(object):
         plt.title(title)
         ax1.set_ylabel('Temperature (C)')
         ax2.set_ylabel('Time Variant Current (A)')
-        ax1.legend(fontsize=7)
-        ax2.legend(fontsize=7)
+        ax1.legend(fontsize=7,
+                   loc='upper left')
+        ax1.legend(fontsize=7,
+                   loc='upper right')
         ax1.tick_params(labelsize=7)
         ax2.tick_params(labelsize=7)
         return data_df
